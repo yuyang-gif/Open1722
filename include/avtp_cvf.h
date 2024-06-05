@@ -44,26 +44,26 @@ extern "C" {
 #define AVTP_CVF_FORMAT_SUBTYPE_JPEG2000	0x02
 
 enum avtp_cvf_field {
-	AVTP_CVF_FIELD_SV,
-	AVTP_CVF_FIELD_MR,
-	AVTP_CVF_FIELD_TV,
-	AVTP_CVF_FIELD_SEQ_NUM,
-	AVTP_CVF_FIELD_TU,
-	AVTP_CVF_FIELD_STREAM_ID,
-	AVTP_CVF_FIELD_TIMESTAMP,
-	AVTP_CVF_FIELD_STREAM_DATA_LEN,
-	AVTP_CVF_FIELD_FORMAT,
-	AVTP_CVF_FIELD_FORMAT_SUBTYPE,
-	AVTP_CVF_FIELD_M,
-	AVTP_CVF_FIELD_EVT,
-	AVTP_CVF_FIELD_H264_PTV,
-	AVTP_CVF_FIELD_H264_TIMESTAMP,
-	AVTP_CVF_FIELD_MAX,
+    AVTP_CVF_FIELD_SV,
+    AVTP_CVF_FIELD_MR,
+    AVTP_CVF_FIELD_TV,
+    AVTP_CVF_FIELD_SEQ_NUM,
+    AVTP_CVF_FIELD_TU,
+    AVTP_CVF_FIELD_STREAM_ID,
+    AVTP_CVF_FIELD_TIMESTAMP,
+    AVTP_CVF_FIELD_STREAM_DATA_LEN,
+    AVTP_CVF_FIELD_FORMAT,
+    AVTP_CVF_FIELD_FORMAT_SUBTYPE,
+    AVTP_CVF_FIELD_M,
+    AVTP_CVF_FIELD_EVT,
+    AVTP_CVF_FIELD_H264_PTV,
+    AVTP_CVF_FIELD_H264_TIMESTAMP,
+    AVTP_CVF_FIELD_MAX,
 };
 
 struct avtp_cvf_h264_payload {
-	uint32_t h264_header;
-	uint8_t h264_data[0];
+    uint32_t h264_header;
+    uint8_t h264_data[0];
 } __attribute__((__packed__));
 
 /* Get value of CVF AVTPDU field.
@@ -76,7 +76,7 @@ struct avtp_cvf_h264_payload {
  *    -EINVAL: If any argument is invalid.
  */
 int avtp_cvf_pdu_get(const struct avtp_stream_pdu *pdu,
-				enum avtp_cvf_field field, uint64_t *val);
+                enum avtp_cvf_field field, uint64_t *val);
 
 /* Set value of CVF AVTPDU field.
  * @pdu: Pointer to PDU struct.
@@ -88,18 +88,17 @@ int avtp_cvf_pdu_get(const struct avtp_stream_pdu *pdu,
  *    -EINVAL: If any argument is invalid.
  */
 int avtp_cvf_pdu_set(struct avtp_stream_pdu *pdu, enum avtp_cvf_field field,
-								uint64_t val);
+                                uint64_t val);
 
 /* Initialize CVF AVTPDU. All AVTPDU fields are initialized with zero except
  * 'subtype' (which is set to AVTP_SUBTYPE_CVF), 'sv' (which is set to 1),
- * 'format' (which is set to AVTP_CVF_FORMAT_RFC) and 'format_subtype'
- * (which is set to the `subtype` specified).
+ * 'format' (which is set to AVTP_CVF_FORMAT_RFC) and 'format_subtype' (which is
+ * set to the `subtype` specified). 
  * @pdu: Pointer to PDU struct.
- * @subtype: AVTP CVF Format Subtype of this AVTPDU.
+ * @subtype: AVTP
+ * CVF Format Subtype of this AVTPDU.
  *
- * Return values:
- *    0: Success.
- *    -EINVAL: If any argument is invalid.
+ * Return values: 0: Success. -EINVAL: If any argument is invalid.
  */
 int avtp_cvf_pdu_init(struct avtp_stream_pdu *pdu, uint8_t subtype);
 

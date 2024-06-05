@@ -1,57 +1,77 @@
-[![Build Status](https://travis-ci.org/AVnu/libavtp.svg?branch=master)](https://travis-ci.org/AVnu/libavtp)
+# Open1722
 
-# About
+## Introduction
 
-Open source implementation of Audio Video Transport Protocol (AVTP) specified
-in IEEE 1722-2016 spec.
+Open1722 is a fork of [AVNU/libavtp](https://github.com/Avnu/libavtp) which is an open source reference implementation of the Audio Video Transport Protocol (AVTP) specified in IEEE 1722-2016 spec. _libavtp_ primarily focuses on audio video data formats of the IEEE 1722-2016 spec.
 
-Libavtp is under BSD License. For more information see LICENSE file.
+IEEE 1722 is also gaining a lot of traction in the automotive community, mainly, to bridge fieldbus technologies over automotive Ethernet. In particular the AVTP Control Formats (ACF) specify serialization for a set of data formats relevant for automotive applications (e.g., CAN, LIN, etc.). Open1722 extends/modifies _libavtp_ to also include these ACF formats.
 
-# Build
+NOTE: Open1722 is currently incubating and under active development. The APIs are not fully stable and are subject to changes.
 
-Before building libavtp make sure you have all the required software installed
-in your system. Below are the requirements and their tested versions:
+Open1722 is under BSD License. For more information see LICENSE file.
 
-* Meson >= 0.43
-* Ninja >= 1.8.2
+## Implementation
 
-The first step to build libavtp is to generate the build system files.
+This repository is organized as follows:
+- The `src/` and `include/` folders contain the IEEE 1722 protocol implementation. We strive to make the implementation platform independant and avoid usage of platform specific headers or libraries. For now the implementation is tested only on Linux.
+- The `examples/` folder contains various applications that use our Open1722 library. The applications are targeted to Linux platforms.
 
+Before building Open1722 make sure you have installed the following software :
+* Meson >= 0.56
+* Ninja >= 1.10.1
+
+Alternatively, you can use VS Code to run the provided dev container which takes care of the dependencies.
+
+The first step to build Open1722 is to generate the build system files.
 ```
 $ meson build
 ```
 
-Then build libavtp by running the following command. The building artifacts
-will be created under the build/ in the top-level directory.
-
+Then build Open1722 by running the following command. The building artifacts will be created under the build/ in the top-level directory.
 ```
-$ ninja -C build
+$ meson compile -C build
 ```
 
-To install libavtp on your system run:
+The build can be cleaned using the following command:
 ```
-$ sudo ninja -C build install
+$ meson --wipe build
 ```
 
-# AVTP Formats Support
+To install Open1722 on your system run:
+```
+$ cd build
+$ sudo meson install
+```
 
-AVTP protocol defines several AVTPDU type formats (see Table 6 from IEEE
-1722-2016 spec). Libavtp doesn't support all of them yet. The list of supported
-formarts is:
-* AAF (PCM encapsulation only)
-* CRF
-* CVF (H.264 only)
-* RVF
+To build all the AVTP targets from the repository, we have a script:
+```
+$ ./build_all.sh
+```
 
-# Examples
+## AVTP Formats Support
 
-The `examples/` directory in the top-level directory provides example
-applications which demonstrate the libavtp functionalities. To build an
-example application run `$ ninja -C build <example name>`.
+AVTP protocol defines several AVTPDU type formats (see Table 6 from IEEE 1722-2016 spec).
 
-Information about what exactly each example application does and how it works
-is provided in the beginning of the .c file from each application.
+The following is the list of the formats currently supported by Open1722:
+ - AAF (PCM encapsulation only)
+ - CRF
+ - CVF (H.264, MJPEG, JPEG2000)
+ - RVF
+ - AVTP Control Formats (ACF) (see Table 22 from IEEE 1722-2016 spec)
+    - CAN
+    - CAN Brief
+    - GPC
+    - Sensor
+    - Sensor Brief
 
-# Security issues
+## Examples
 
-Please report any security issues with this code to https://github.com/AVnu/libavtp/issues
+The `examples/` directory provides sample applications which demonstrate the Open1722 functionalities. Each example directory contains a README file that includes specific details on its functionality, configuration, and dependencies.
+
+To build an example application run `$ meson compile -C build <path to example>`. On a successful build, the executables are available in the `build/<path to example>`.
+
+E.g. to build and execute the IEEE 1722 CAN Talker application:
+```
+$ meson compile -C build ./examples/acf-can/acf-can-talker
+$ ./build/examples/acf-can/acf-can-talker
+```
