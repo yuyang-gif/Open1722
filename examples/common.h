@@ -1,4 +1,5 @@
-/*
+ /*
+ * Copyright (c) 2024, COVESA
  * Copyright (c) 2019, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
@@ -9,9 +10,9 @@
  *    * Redistributions in binary form must reproduce the above copyright
  *      notice, this list of conditions and the following disclaimer in the
  *      documentation and/or other materials provided with the distribution.
- *    * Neither the name of Intel Corporation nor the names of its contributors
- *      may be used to endorse or promote products derived from this software
- *      without specific prior written permission.
+ *    * Neither the name of Intel Corporation, COVESA nor the names of their
+ *      contributors  may be used to endorse or promote products derived from 
+ *      this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -23,9 +24,12 @@
  * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  */
 
 #include <stdint.h>
+#include <netinet/in.h>
 
 /* Calculate AVTP presentation time based on current time and informed
  * max_transit_time.
@@ -49,6 +53,15 @@ int calculate_avtp_time(uint32_t *avtp_time, uint32_t max_transit_time);
  */
 int get_presentation_time(uint64_t avtp_time, struct timespec *tspec);
 
+/* Create UDP socket to listen for incomimg packets.
+ * @udp_port: UDP port to listen on.
+ *
+ * Returns:
+ *    >= 0: Socket file descriptor. Should be closed with close() when done.
+ *    -1: Could not create socket.
+ */
+int create_listener_socket_udp(uint32_t udp_port);
+
 /* Create TSN socket to listen for incomimg packets.
  * @ifname: Network interface name where to create the socket.
  * @macaddr: Stream destination MAC address.
@@ -69,6 +82,15 @@ int create_listener_socket(char *ifname, uint8_t macaddr[], int protocol);
  */
 int create_talker_socket(int priority);
 
+/* Create UDP socket to send packets.
+ * @priority: SO_PRIORITY to be set in socket.
+ *
+ * Returns:
+ *    >= 0: Socket file descriptor. Should be closed with close() when done.
+ *    -1: Could not create socket.
+ */
+int create_talker_socket_udp(int priority);
+
 /* Set struct sockaddr_ll with TSN and socket parameters, so it can be used
  * later on sendo() or bind() calls.
  * @fd: Socket file descriptor.
@@ -83,6 +105,19 @@ int create_talker_socket(int priority);
  */
 int setup_socket_address(int fd, const char *ifname, uint8_t macaddr[],
 				int protocol, struct sockaddr_ll *sk_addr);
+
+/* Set struct sockaddr_in with destination IP address and port parameters, 
+ * so it can be used later on sendo() or bind() calls.
+ * @addr: Network address to send packets.
+ * @port: UDP port to send packets.
+ * @sk_addr: Pointer to struct sockaddr_in to be set up.
+ *
+ * Returns:
+ *    0: Success.
+ *    -1: Could not get interface index.
+ */
+int setup_udp_socket_address(struct in_addr *addr, uint32_t port,
+                struct sockaddr_in *sk_addr);
 
 /* Write data to standard output.
  * @data: Data to be written.

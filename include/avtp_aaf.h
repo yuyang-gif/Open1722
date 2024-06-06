@@ -60,21 +60,21 @@ extern "C" {
 #define AVTP_AAF_PCM_SP_SPARSE			0x01
 
 enum avtp_aaf_field {
-	AVTP_AAF_FIELD_SV,
-	AVTP_AAF_FIELD_MR,
-	AVTP_AAF_FIELD_TV,
-	AVTP_AAF_FIELD_SEQ_NUM,
-	AVTP_AAF_FIELD_TU,
-	AVTP_AAF_FIELD_STREAM_ID,
-	AVTP_AAF_FIELD_TIMESTAMP,
-	AVTP_AAF_FIELD_STREAM_DATA_LEN,
-	AVTP_AAF_FIELD_FORMAT,
-	AVTP_AAF_FIELD_NSR,
-	AVTP_AAF_FIELD_CHAN_PER_FRAME,
-	AVTP_AAF_FIELD_BIT_DEPTH,
-	AVTP_AAF_FIELD_SP,
-	AVTP_AAF_FIELD_EVT,
-	AVTP_AAF_FIELD_MAX,
+    AVTP_AAF_FIELD_SV,
+    AVTP_AAF_FIELD_MR,
+    AVTP_AAF_FIELD_TV,
+    AVTP_AAF_FIELD_SEQ_NUM,
+    AVTP_AAF_FIELD_TU,
+    AVTP_AAF_FIELD_STREAM_ID,
+    AVTP_AAF_FIELD_TIMESTAMP,
+    AVTP_AAF_FIELD_STREAM_DATA_LEN,
+    AVTP_AAF_FIELD_FORMAT,
+    AVTP_AAF_FIELD_NSR,
+    AVTP_AAF_FIELD_CHAN_PER_FRAME,
+    AVTP_AAF_FIELD_BIT_DEPTH,
+    AVTP_AAF_FIELD_SP,
+    AVTP_AAF_FIELD_EVT,
+    AVTP_AAF_FIELD_MAX,
 };
 
 /* Get value from AAF AVTPDU field.
@@ -87,7 +87,7 @@ enum avtp_aaf_field {
  *    -EINVAL: If any argument is invalid.
  */
 int avtp_aaf_pdu_get(const struct avtp_stream_pdu *pdu,
-				enum avtp_aaf_field field, uint64_t *val);
+                enum avtp_aaf_field field, uint64_t *val);
 
 /* Set value from AAF AVTPDU field.
  * @pdu: Pointer to PDU struct.
@@ -99,7 +99,7 @@ int avtp_aaf_pdu_get(const struct avtp_stream_pdu *pdu,
  *    -EINVAL: If any argument is invalid.
  */
 int avtp_aaf_pdu_set(struct avtp_stream_pdu *pdu, enum avtp_aaf_field field,
-								uint64_t val);
+                                uint64_t val);
 
 /* Initialize AAF AVTPDU. All AVTPDU fields are initialized with zero except
  * 'subtype' (which is set to AVTP_SUBTYPE_AAF) and 'sv' (which is set to 1).

@@ -1,4 +1,5 @@
-/*
+ /*
+ * Copyright (c) 2024, COVESA
  * Copyright (c) 2019, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
@@ -9,9 +10,9 @@
  *    * Redistributions in binary form must reproduce the above copyright
  *      notice, this list of conditions and the following disclaimer in the
  *      documentation and/or other materials provided with the distribution.
- *    * Neither the name of Intel Corporation nor the names of its contributors
- *      may be used to endorse or promote products derived from this software
- *      without specific prior written permission.
+ *    * Neither the name of Intel Corporation, COVESA nor the names of their
+ *      contributors  may be used to endorse or promote products derived from 
+ *      this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -23,6 +24,8 @@
  * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  */
 
 #include <arpa/inet.h>
@@ -38,179 +41,247 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "examples/common.h"
+#include "common.h"
 
 #define NSEC_PER_SEC		1000000000ULL
 #define NSEC_PER_MSEC		1000000ULL
 
 int calculate_avtp_time(uint32_t *avtp_time, uint32_t max_transit_time)
 {
-	int res;
-	struct timespec tspec;
-	uint64_t ptime;
+    int res;
+    struct timespec tspec;
+    uint64_t ptime;
 
-	res = clock_gettime(CLOCK_REALTIME, &tspec);
-	if (res < 0) {
-		perror("Failed to get time");
-		return -1;
-	}
+    res = clock_gettime(CLOCK_REALTIME, &tspec);
+    if (res < 0) {
+        perror("Failed to get time");
+        return -1;
+    }
 
-	ptime = (tspec.tv_sec * NSEC_PER_SEC) +
-			(max_transit_time * NSEC_PER_MSEC) + tspec.tv_nsec;
+    ptime = (tspec.tv_sec * NSEC_PER_SEC) +
+            (max_transit_time * NSEC_PER_MSEC) + tspec.tv_nsec;
 
-	*avtp_time = ptime % (1ULL << 32);
+    *avtp_time = ptime % (1ULL << 32);
 
-	return 0;
+    return 0;
 }
 
 int get_presentation_time(uint64_t avtp_time, struct timespec *tspec)
 {
-	int res;
-	uint64_t ptime, now;
+    int res;
+    uint64_t ptime, now;
 
-	res = clock_gettime(CLOCK_REALTIME, tspec);
-	if (res < 0) {
-		perror("Failed to get time from PHC");
-		return -1;
-	}
+    res = clock_gettime(CLOCK_REALTIME, tspec);
+    if (res < 0) {
+        perror("Failed to get time from PHC");
+        return -1;
+    }
 
-	now = (tspec->tv_sec * NSEC_PER_SEC) + tspec->tv_nsec;
+    now = (tspec->tv_sec * NSEC_PER_SEC) + tspec->tv_nsec;
 
-	/* The avtp_timestamp within AAF packet is the lower part (32
-	 * less-significant bits) from presentation time calculated by the
-	 * talker.
-	 */
-	ptime = (now & 0xFFFFFFFF00000000ULL) | avtp_time;
+    /* The avtp_timestamp within AAF packet is the lower part (32
+     * less-significant bits) from presentation time calculated by the
+     * talker.
+     */
+    ptime = (now & 0xFFFFFFFF00000000ULL) | avtp_time;
 
-	/* If 'ptime' is less than the 'now', it means the higher part
-	 * from 'ptime' needs to be incremented by 1 in order to recover the
-	 * presentation time set by the talker.
-	 */
-	if (ptime < now)
-		ptime += (1ULL << 32);
+    /* If 'ptime' is less than the 'now', it means the higher part
+     * from 'ptime' needs to be incremented by 1 in order to recover the
+     * presentation time set by the talker.
+     */
+    if (ptime < now)
+        ptime += (1ULL << 32);
 
-	tspec->tv_sec = ptime / NSEC_PER_SEC;
-	tspec->tv_nsec = ptime % NSEC_PER_SEC;
+    tspec->tv_sec = ptime / NSEC_PER_SEC;
+    tspec->tv_nsec = ptime % NSEC_PER_SEC;
 
-	return 0;
+    return 0;
 }
 
 int setup_socket_address(int fd, const char *ifname, uint8_t macaddr[],
-				int protocol, struct sockaddr_ll *sk_addr)
+                int protocol, struct sockaddr_ll *sk_addr)
 {
-	int res;
-	struct ifreq req;
+    int res;
+    struct ifreq req;
 
-	snprintf(req.ifr_name, sizeof(req.ifr_name), "%s", ifname);
-	res = ioctl(fd, SIOCGIFINDEX, &req);
-	if (res < 0) {
-		perror("Failed to get interface index");
-		return -1;
-	}
+    snprintf(req.ifr_name, sizeof(req.ifr_name), "%s", ifname);
+    res = ioctl(fd, SIOCGIFINDEX, &req);
+    if (res < 0) {
+        perror("Failed to get interface index");
+        return -1;
+    }
 
-	sk_addr->sll_family = AF_PACKET;
-	sk_addr->sll_protocol = htons(protocol);
-	sk_addr->sll_halen = ETH_ALEN;
-	sk_addr->sll_ifindex = req.ifr_ifindex;
-	memcpy(sk_addr->sll_addr, macaddr, ETH_ALEN);
+    sk_addr->sll_family = AF_PACKET;
+    sk_addr->sll_protocol = htons(protocol);
+    sk_addr->sll_halen = ETH_ALEN;
+    sk_addr->sll_ifindex = req.ifr_ifindex;
+    memcpy(sk_addr->sll_addr, macaddr, ETH_ALEN);
 
-	return 0;
+    return 0;
+}
+
+int setup_udp_socket_address(struct in_addr *addr, uint32_t port,
+                struct sockaddr_in *sk_addr) {
+
+    sk_addr->sin_family = AF_INET;
+    sk_addr->sin_addr = *addr;
+    sk_addr->sin_port = htons(port);
+
+    return 0;
+
+}
+
+int create_talker_socket_udp(int priority)
+{
+    int fd, res;
+
+    fd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (fd < 0) {
+        perror("Failed to open socket");
+        return -1;
+    }
+
+    if (priority != -1) {
+        res = setsockopt(fd, SOL_SOCKET, SO_PRIORITY, &priority,
+                            sizeof(priority));
+        if (res < 0) {
+            perror("Failed to set priority");
+            goto err;
+        }
+    }
+
+    return fd;
+
+err:
+    close(fd);
+    return -1;
 }
 
 int create_talker_socket(int priority)
 {
-	int fd, res;
+    int fd, res;
 
-	fd = socket(AF_PACKET, SOCK_DGRAM, htons(ETH_P_TSN));
-	if (fd < 0) {
-		perror("Failed to open socket");
-		return -1;
-	}
+    fd = socket(AF_PACKET, SOCK_DGRAM, htons(ETH_P_TSN));
+    if (fd < 0) {
+        perror("Failed to open socket");
+        return -1;
+    }
 
-	if (priority != -1) {
-		res = setsockopt(fd, SOL_SOCKET, SO_PRIORITY, &priority,
-							sizeof(priority));
-		if (res < 0) {
-			perror("Failed to set priority");
-			goto err;
-		}
-	}
+    if (priority != -1) {
+        res = setsockopt(fd, SOL_SOCKET, SO_PRIORITY, &priority,
+                            sizeof(priority));
+        if (res < 0) {
+            perror("Failed to set priority");
+            goto err;
+        }
+    }
 
-	return fd;
+    return fd;
 
 err:
-	close(fd);
-	return -1;
+    close(fd);
+    return -1;
+}
+
+int create_listener_socket_udp(uint32_t udp_port) {
+
+    int fd, res;
+    struct sockaddr_in sk_addr;
+
+    //create a UDP socket
+    fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if (fd < 0) {
+        perror("Failed to open socket");
+        return -1;
+    }
+
+    // Initialize the socket
+    memset((char *) &sk_addr, 0, sizeof(sk_addr));
+    sk_addr.sin_family = AF_INET;
+    sk_addr.sin_port = htons(udp_port);
+    sk_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+
+    res = bind(fd, (struct sockaddr *) &sk_addr, sizeof(sk_addr));
+    if (res < 0) {
+        perror("Couldn't bind() to port");
+        goto err;
+    }
+
+    return fd;
+
+err:
+    close(fd);
+    return -1;
 }
 
 int create_listener_socket(char *ifname, uint8_t macaddr[], int protocol)
 {
-	int fd, res;
-	struct packet_mreq mreq;
+    int fd, res;
+    struct packet_mreq mreq;
 
-	struct sockaddr_ll sk_addr;
+    struct sockaddr_ll sk_addr;
 
-	fd = socket(AF_PACKET, SOCK_DGRAM, htons(protocol));
-	if (fd < 0) {
-		perror("Failed to open socket");
-		return -1;
-	}
+    fd = socket(AF_PACKET, SOCK_DGRAM, htons(protocol));
+    if (fd < 0) {
+        perror("Failed to open socket");
+        return -1;
+    }
 
-	res = setup_socket_address(fd, ifname, macaddr, protocol, &sk_addr);
-	if (res < 0)
-		goto err;
+    res = setup_socket_address(fd, ifname, macaddr, protocol, &sk_addr);
+    if (res < 0)
+        goto err;
 
-	res = bind(fd, (struct sockaddr *) &sk_addr, sizeof(sk_addr));
-	if (res < 0) {
-		perror("Couldn't bind() to interface");
-		goto err;
-	}
+    res = bind(fd, (struct sockaddr *) &sk_addr, sizeof(sk_addr));
+    if (res < 0) {
+        perror("Couldn't bind() to interface");
+        goto err;
+    }
 
-	mreq.mr_ifindex = sk_addr.sll_ifindex;
-	mreq.mr_type = PACKET_MR_MULTICAST;
-	mreq.mr_alen = ETH_ALEN;
-	memcpy(&mreq.mr_address, macaddr, ETH_ALEN);
+    mreq.mr_ifindex = sk_addr.sll_ifindex;
+    mreq.mr_type = PACKET_MR_MULTICAST;
+    mreq.mr_alen = ETH_ALEN;
+    memcpy(&mreq.mr_address, macaddr, ETH_ALEN);
 
-	res = setsockopt(fd, SOL_PACKET, PACKET_ADD_MEMBERSHIP,
-					&mreq, sizeof(struct packet_mreq));
-	if (res < 0) {
-		perror("Couldn't set PACKET_ADD_MEMBERSHIP");
-		goto err;
-	}
+    res = setsockopt(fd, SOL_PACKET, PACKET_ADD_MEMBERSHIP,
+                    &mreq, sizeof(struct packet_mreq));
+    if (res < 0) {
+        perror("Couldn't set PACKET_ADD_MEMBERSHIP");
+        goto err;
+    }
 
-	return fd;
+    return fd;
 
 err:
-	close(fd);
-	return -1;
+    close(fd);
+    return -1;
 }
 
 int arm_timer(int fd, struct timespec *tspec)
 {
-	int res;
-	struct itimerspec timer_spec = { 0 };
+    int res;
+    struct itimerspec timer_spec = { 0 };
 
-	timer_spec.it_value.tv_sec = tspec->tv_sec;
-	timer_spec.it_value.tv_nsec = tspec->tv_nsec;
+    timer_spec.it_value.tv_sec = tspec->tv_sec;
+    timer_spec.it_value.tv_nsec = tspec->tv_nsec;
 
-	res = timerfd_settime(fd, TFD_TIMER_ABSTIME, &timer_spec, NULL);
-	if (res < 0) {
-		perror("Failed to set timer");
-		return -1;
-	}
+    res = timerfd_settime(fd, TFD_TIMER_ABSTIME, &timer_spec, NULL);
+    if (res < 0) {
+        perror("Failed to set timer");
+        return -1;
+    }
 
-	return 0;
+    return 0;
 }
 
 int present_data(uint8_t *data, size_t len)
 {
-	ssize_t n;
+    ssize_t n;
 
-	n = write(STDOUT_FILENO, data, len);
-	if (n < 0 || n != len) {
-		perror("Failed to write()");
-		return -1;
-	}
+    n = write(STDOUT_FILENO, data, len);
+    if (n < 0 || n != len) {
+        perror("Failed to write()");
+        return -1;
+    }
 
-	return 0;
+    return 0;
 }

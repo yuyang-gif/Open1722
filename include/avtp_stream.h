@@ -58,15 +58,15 @@ extern "C" {
  * Otherwise, the mapping step would be necessary before the calls.
  */
 enum avtp_stream_field {
-	AVTP_STREAM_FIELD_SV,
-	AVTP_STREAM_FIELD_MR,
-	AVTP_STREAM_FIELD_TV,
-	AVTP_STREAM_FIELD_SEQ_NUM,
-	AVTP_STREAM_FIELD_TU,
-	AVTP_STREAM_FIELD_STREAM_ID,
-	AVTP_STREAM_FIELD_TIMESTAMP,
-	AVTP_STREAM_FIELD_STREAM_DATA_LEN,
-	AVTP_STREAM_FIELD_MAX
+    AVTP_STREAM_FIELD_SV,
+    AVTP_STREAM_FIELD_MR,
+    AVTP_STREAM_FIELD_TV,
+    AVTP_STREAM_FIELD_SEQ_NUM,
+    AVTP_STREAM_FIELD_TU,
+    AVTP_STREAM_FIELD_STREAM_ID,
+    AVTP_STREAM_FIELD_TIMESTAMP,
+    AVTP_STREAM_FIELD_STREAM_DATA_LEN,
+    AVTP_STREAM_FIELD_MAX
 };
 
 /* Get value from Stream AVTPDU field.
@@ -79,7 +79,7 @@ enum avtp_stream_field {
  *    -EINVAL: If any argument is invalid.
  */
 int avtp_stream_pdu_get(const struct avtp_stream_pdu *pdu,
-				enum avtp_stream_field field, uint64_t *val);
+                enum avtp_stream_field field, uint64_t *val);
 
 /* Set value from Stream AVTPDU field.
  * @pdu: Pointer to PDU struct.
@@ -91,7 +91,7 @@ int avtp_stream_pdu_get(const struct avtp_stream_pdu *pdu,
  *    -EINVAL: If any argument is invalid.
  */
 int avtp_stream_pdu_set(struct avtp_stream_pdu *pdu,
-				enum avtp_stream_field field, uint64_t val);
+                enum avtp_stream_field field, uint64_t val);
 
 #ifdef __cplusplus
 }

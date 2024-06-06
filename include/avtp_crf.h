@@ -50,25 +50,25 @@ extern "C" {
 #define AVTP_CRF_PULL_MULT_BY_1_OVER_8		0x05
 
 struct avtp_crf_pdu {
-	uint32_t subtype_data;
-	uint64_t stream_id;
-	uint64_t packet_info;
-	uint64_t crf_data[0];
+    uint32_t subtype_data;
+    uint64_t stream_id;
+    uint64_t packet_info;
+    uint64_t crf_data[0];
 } __attribute__ ((__packed__));
 
 enum avtp_crf_field {
-	AVTP_CRF_FIELD_SV,
-	AVTP_CRF_FIELD_MR,
-	AVTP_CRF_FIELD_FS,
-	AVTP_CRF_FIELD_TU,
-	AVTP_CRF_FIELD_SEQ_NUM,
-	AVTP_CRF_FIELD_TYPE,
-	AVTP_CRF_FIELD_STREAM_ID,
-	AVTP_CRF_FIELD_PULL,
-	AVTP_CRF_FIELD_BASE_FREQ,
-	AVTP_CRF_FIELD_CRF_DATA_LEN,
-	AVTP_CRF_FIELD_TIMESTAMP_INTERVAL,
-	AVTP_CRF_FIELD_MAX,
+    AVTP_CRF_FIELD_SV,
+    AVTP_CRF_FIELD_MR,
+    AVTP_CRF_FIELD_FS,
+    AVTP_CRF_FIELD_TU,
+    AVTP_CRF_FIELD_SEQ_NUM,
+    AVTP_CRF_FIELD_TYPE,
+    AVTP_CRF_FIELD_STREAM_ID,
+    AVTP_CRF_FIELD_PULL,
+    AVTP_CRF_FIELD_BASE_FREQ,
+    AVTP_CRF_FIELD_CRF_DATA_LEN,
+    AVTP_CRF_FIELD_TIMESTAMP_INTERVAL,
+    AVTP_CRF_FIELD_MAX,
 };
 
 /* Get value from CRF AVTPDU field.
@@ -81,7 +81,7 @@ enum avtp_crf_field {
  *    -EINVAL: If any argument is invalid.
  */
 int avtp_crf_pdu_get(const struct avtp_crf_pdu *pdu,
-				enum avtp_crf_field field, uint64_t *val);
+                enum avtp_crf_field field, uint64_t *val);
 
 /* Set value from CRF AVTPDU field.
  * @pdu: Pointer to PDU struct.
@@ -93,7 +93,7 @@ int avtp_crf_pdu_get(const struct avtp_crf_pdu *pdu,
  *    -EINVAL: If any argument is invalid.
  */
 int avtp_crf_pdu_set(struct avtp_crf_pdu *pdu, enum avtp_crf_field field,
-								uint64_t val);
+                                uint64_t val);
 
 /* Initialize CRF AVTPDU. All AVTPDU fields are initialized with zero except
  * 'subtype' (which is set to AVTP_SUBTYPE_CRF) and 'sv' (which is set to 1).
