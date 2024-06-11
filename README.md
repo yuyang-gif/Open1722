@@ -2,6 +2,11 @@
 
 # Open1722
 
+### Maintainers
+
+Naresh Nayak - Robert Bosch GmbH
+Adriaan Niess - Robert Bosch GmbH
+
 ## Introduction
 
 Open1722 is a fork of [AVNU/libavtp](https://github.com/Avnu/libavtp) which is an open source reference implementation of the Audio Video Transport Protocol (AVTP) specified in IEEE 1722-2016 spec. _libavtp_ primarily focuses on audio video data formats of the IEEE 1722-2016 spec.
