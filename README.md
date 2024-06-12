@@ -6,6 +6,7 @@
 
 * [Naresh Nayak - Robert Bosch GmbH](https://github.com/nayakned)
 * [Adriaan Niess - Robert Bosch GmbH](https://github.com/adriaan-niess)
+* [Kamel Fakih - Robert Bosch GmbH](https://github.com/kamelfakihh/)
 
 ## Introduction
 
