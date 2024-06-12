@@ -1,4 +1,5 @@
-![Status - Incubating](https://img.shields.io/static/v1?label=Status&message=Incubating&color=FEFF3A&style=for-the-badge)
+![Status - Incubating](https://img.shields.io/static/v1?label=Status&message=Incubating&color=FEFF3A&style=for-the-badge) 
+![Status](https://github.com/covesa/open1722/actions/workflows/build-all.yml/badge.svg)
 
 # Open1722
 
