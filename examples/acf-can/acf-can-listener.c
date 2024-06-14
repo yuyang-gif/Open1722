@@ -171,7 +171,7 @@ void print_can_acf(uint8_t* acf_pdu)
 static int new_packet(int sk_fd, int can_socket) {
 
     int res;
-    uint64_t msg_length, proc_bytes = 0;
+    uint64_t msg_length, proc_bytes = 0, msg_proc_bytes = 0;
     uint64_t can_frame_id, udp_seq_num = 0, subtype;
     uint16_t payload_length, pdu_length;
     uint8_t *can_payload, i;
@@ -193,11 +193,12 @@ static int new_packet(int sk_fd, int can_socket) {
         udp_pdu = (Avtp_UDP_t *) pdu;
         Avtp_UDP_GetField(udp_pdu, AVTP_UDP_FIELD_ENCAPSULATION_SEQ_NO, &udp_seq_num);
         cf_pdu = pdu + sizeof(Avtp_UDP_t);
+        proc_bytes += AVTP_UDP_HEADER_LEN;
     } else {
         cf_pdu = pdu;
     }
 
-    res = Avtp_CommonHeader_GetField((Avtp_CommonHeader_t*)pdu, AVTP_COMMON_HEADER_FIELD_SUBTYPE, &subtype);
+    res = Avtp_CommonHeader_GetField((Avtp_CommonHeader_t*)cf_pdu, AVTP_COMMON_HEADER_FIELD_SUBTYPE, &subtype);
     if (res < 0) {
         fprintf(stderr, "Failed to get subtype field: %d\n", res);
         return 0;
@@ -212,10 +213,10 @@ static int new_packet(int sk_fd, int can_socket) {
 
     if(subtype == AVTP_SUBTYPE_TSCF){
         proc_bytes += AVTP_TSCF_HEADER_LEN;
-        res = Avtp_Tscf_GetField((Avtp_Tscf_t*)pdu, AVTP_TSCF_FIELD_STREAM_DATA_LENGTH, (uint64_t *) &msg_length);
+        res = Avtp_Tscf_GetField((Avtp_Tscf_t*)cf_pdu, AVTP_TSCF_FIELD_STREAM_DATA_LENGTH, (uint64_t *) &msg_length);
     }else{
         proc_bytes += AVTP_NTSCF_HEADER_LEN;
-        res = Avtp_Ntscf_GetField((Avtp_Ntscf_t*)pdu, AVTP_NTSCF_FIELD_NTSCF_DATA_LENGTH, (uint64_t *) &msg_length);
+        res = Avtp_Ntscf_GetField((Avtp_Ntscf_t*)cf_pdu, AVTP_NTSCF_FIELD_NTSCF_DATA_LENGTH, (uint64_t *) &msg_length);
     }
 
     if (res < 0) {
@@ -223,7 +224,7 @@ static int new_packet(int sk_fd, int can_socket) {
         return 0;
     }
 
-    while (proc_bytes < msg_length) {
+    while (msg_proc_bytes < msg_length) {
 
         acf_pdu = &pdu[proc_bytes];
 
@@ -240,7 +241,7 @@ static int new_packet(int sk_fd, int can_socket) {
         }
 
         can_payload = Avtp_Can_GetPayload((Avtp_Can_t*)acf_pdu, &payload_length, &pdu_length);
-        proc_bytes += pdu_length*4;
+        msg_proc_bytes += pdu_length*4;
 
         if (can_socket == 0) {
             for (i = 0; i < payload_length; i++) {
