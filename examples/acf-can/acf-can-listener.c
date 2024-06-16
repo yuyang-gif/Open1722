@@ -192,7 +192,7 @@ static int new_packet(int sk_fd, int can_socket) {
     if (use_udp) {
         udp_pdu = (Avtp_UDP_t *) pdu;
         Avtp_UDP_GetField(udp_pdu, AVTP_UDP_FIELD_ENCAPSULATION_SEQ_NO, &udp_seq_num);
-        cf_pdu = pdu + sizeof(Avtp_UDP_t);
+        cf_pdu = pdu + AVTP_UDP_HEADER_LEN;
         proc_bytes += AVTP_UDP_HEADER_LEN;
     } else {
         cf_pdu = pdu;
@@ -201,7 +201,7 @@ static int new_packet(int sk_fd, int can_socket) {
     res = Avtp_CommonHeader_GetField((Avtp_CommonHeader_t*)cf_pdu, AVTP_COMMON_HEADER_FIELD_SUBTYPE, &subtype);
     if (res < 0) {
         fprintf(stderr, "Failed to get subtype field: %d\n", res);
-        return 0;
+        return -1;
     }
 
     if (!((subtype == AVTP_SUBTYPE_NTSCF) ||
@@ -221,7 +221,7 @@ static int new_packet(int sk_fd, int can_socket) {
 
     if (res < 0) {
         fprintf(stderr, "Failed to get message length: %d\n", res);
-        return 0;
+        return -1;
     }
 
     while (msg_proc_bytes < msg_length) {
@@ -230,14 +230,14 @@ static int new_packet(int sk_fd, int can_socket) {
 
         if (!is_valid_acf_packet(acf_pdu)) {
             fprintf(stderr, "Error: Invalid ACF packet.\n");
-            return 0;
+            return -1;
         }
 
         res = Avtp_Can_GetField((Avtp_Can_t*)acf_pdu, AVTP_CAN_FIELD_CAN_IDENTIFIER,
                                 &can_frame_id);
         if (res < 0) {
             fprintf(stderr, "Error: Getting CAN frame ID\n");
-            return 0;
+            return -1;
         }
 
         can_payload = Avtp_Can_GetPayload((Avtp_Can_t*)acf_pdu, &payload_length, &pdu_length);
