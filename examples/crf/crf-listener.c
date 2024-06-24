@@ -100,7 +100,7 @@
 #include <inttypes.h>
 
 #include "avtp.h"
-#include "avtp_crf.h"
+#include "avtp/Crf.h"
 #include "avtp_aaf.h"
 #include "common.h"
 #include "avtp/CommonHeader.h"

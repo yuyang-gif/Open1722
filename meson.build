@@ -11,7 +11,6 @@ avtp_lib = library(
     [
      'src/avtp.c',
      'src/avtp_aaf.c',
-     'src/avtp_crf.c',
      'src/avtp_cvf.c',
      'src/avtp_ieciidc.c',
      'src/avtp_stream.c',
@@ -26,7 +25,8 @@ avtp_lib = library(
      'src/avtp/acf/Sensor.c',
      'src/avtp/acf/SensorBrief.c',
      'src/avtp/Udp.c',
-     'src/avtp/Rvf.c'
+     'src/avtp/Rvf.c',
+     'src/avtp/Crf.c',
     ],
     version: meson.project_version(),
     include_directories: include_directories('include'),
@@ -45,6 +45,7 @@ install_headers(
     'include/avtp/Udp.h',
     'include/avtp/Utils.h',
     'include/avtp/Rvf.h',
+    'include/avtp/Crf.h',
     subdir : 'avtp'
 )
 

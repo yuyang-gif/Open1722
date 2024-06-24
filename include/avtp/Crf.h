@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2024, COVESA
  * Copyright (c) 2018, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
@@ -9,9 +10,9 @@
  *    * Redistributions in binary form must reproduce the above copyright
  *      notice, this list of conditions and the following disclaimer in the
  *      documentation and/or other materials provided with the distribution.
- *    * Neither the name of Intel Corporation nor the names of its contributors
- *      may be used to endorse or promote products derived from this software
- *      without specific prior written permission.
+ *    * Neither the name of Intel Corporation, COVESA nor the names of their
+ *      contributors  may be used to endorse or promote products derived from 
+ *      this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -23,16 +24,22 @@
  * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  */
 
 #pragma once
 
-#include <errno.h>
 #include <stdint.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "avtp/Utils.h"
+
+#define AVTP_CRF_HEADER_LEN     (5 * AVTP_QUADLET_SIZE)
+
+typedef struct Avtp_Cvf {
+    uint8_t header[AVTP_CRF_HEADER_LEN];
+    uint8_t payload[0];
+} Avtp_Crf_t;
 
 /* CRF 'type' field values. */
 #define AVTP_CRF_TYPE_USER			0x00
@@ -49,6 +56,40 @@ extern "C" {
 #define AVTP_CRF_PULL_MULT_BY_25_OVER_24	0x04
 #define AVTP_CRF_PULL_MULT_BY_1_OVER_8		0x05
 
+typedef enum Avtp_CrfField {
+    /* CRF header fields */
+    AVTP_CRF_FIELD_SUBTYPE,
+    AVTP_CRF_FIELD_SV,
+    AVTP_CRF_FIELD_VERSION,
+    AVTP_CRF_FIELD_MR,
+    AVTP_CRF_FIELD_RESERVED,
+    AVTP_CRF_FIELD_FS,
+    AVTP_CRF_FIELD_TU,
+    AVTP_CRF_FIELD_SEQUENCE_NUM,
+    AVTP_CRF_FIELD_TYPE,
+    AVTP_CRF_FIELD_STREAM_ID,
+    AVTP_CRF_FIELD_PULL,
+    AVTP_CRF_FIELD_BASE_FREQUENCY,
+    AVTP_CRF_FIELD_CRF_DATA_LENGTH,
+    AVTP_CRF_FIELD_TIMESTAMP_INTERVAL,
+    /* Count number of fields for bound checks */
+    AVTP_CRF_FIELD_MAX,
+}Avtp_CrfField_t;
+
+int Avtp_Crf_Init(Avtp_Crf_t* pdu);
+
+int Avtp_Crf_GetField(Avtp_Crf_t* pdu, Avtp_CrfField_t field, uint64_t* value);
+
+int Avtp_Crf_SetField(Avtp_Crf_t* pdu, Avtp_CrfField_t field, uint64_t value);
+
+/******************************************************************************
+ * Legacy API (deprecated)
+ *****************************************************************************/
+
+#define AVTP_CRF_FIELD_SEQ_NUM          AVTP_CRF_FIELD_SEQUENCE_NUM
+#define AVTP_CRF_FIELD_BASE_FREQ        AVTP_CRF_FIELD_BASE_FREQUENCY
+#define AVTP_CRF_FIELD_CRF_DATA_LEN     AVTP_CRF_FIELD_CRF_DATA_LENGTH
+
 struct avtp_crf_pdu {
     uint32_t subtype_data;
     uint64_t stream_id;
@@ -56,22 +97,9 @@ struct avtp_crf_pdu {
     uint64_t crf_data[0];
 } __attribute__ ((__packed__));
 
-enum avtp_crf_field {
-    AVTP_CRF_FIELD_SV,
-    AVTP_CRF_FIELD_MR,
-    AVTP_CRF_FIELD_FS,
-    AVTP_CRF_FIELD_TU,
-    AVTP_CRF_FIELD_SEQ_NUM,
-    AVTP_CRF_FIELD_TYPE,
-    AVTP_CRF_FIELD_STREAM_ID,
-    AVTP_CRF_FIELD_PULL,
-    AVTP_CRF_FIELD_BASE_FREQ,
-    AVTP_CRF_FIELD_CRF_DATA_LEN,
-    AVTP_CRF_FIELD_TIMESTAMP_INTERVAL,
-    AVTP_CRF_FIELD_MAX,
-};
-
-/* Get value from CRF AVTPDU field.
+/**
+ * @deprecated
+ * Get value from CRF AVTPDU field.
  * @pdu: Pointer to PDU struct.
  * @field: PDU field to be retrieved.
  * @val: Pointer to variable which the retrieved value should be saved.
@@ -80,10 +108,11 @@ enum avtp_crf_field {
  *    0: Success.
  *    -EINVAL: If any argument is invalid.
  */
-int avtp_crf_pdu_get(const struct avtp_crf_pdu *pdu,
-                enum avtp_crf_field field, uint64_t *val);
+int avtp_crf_pdu_get(const void *pdu, Avtp_CrfField_t field, uint64_t *val);
 
-/* Set value from CRF AVTPDU field.
+/**
+ * @deprecated
+ * Set value from CRF AVTPDU field.
  * @pdu: Pointer to PDU struct.
  * @field: PDU field to be set.
  * @val: Value to be set.
@@ -92,10 +121,11 @@ int avtp_crf_pdu_get(const struct avtp_crf_pdu *pdu,
  *    0: Success.
  *    -EINVAL: If any argument is invalid.
  */
-int avtp_crf_pdu_set(struct avtp_crf_pdu *pdu, enum avtp_crf_field field,
-                                uint64_t val);
+int avtp_crf_pdu_set(void *pdu, Avtp_CrfField_t field, uint64_t val);
 
-/* Initialize CRF AVTPDU. All AVTPDU fields are initialized with zero except
+/**
+ * @deprecated
+ * Initialize CRF AVTPDU. All AVTPDU fields are initialized with zero except
  * 'subtype' (which is set to AVTP_SUBTYPE_CRF) and 'sv' (which is set to 1).
  * @pdu: Pointer to PDU struct.
  *
@@ -103,8 +133,4 @@ int avtp_crf_pdu_set(struct avtp_crf_pdu *pdu, enum avtp_crf_field field,
  *    0: Success.
  *    -EINVAL: If any argument is invalid.
  */
-int avtp_crf_pdu_init(struct avtp_crf_pdu *pdu);
-
-#ifdef __cplusplus
-}
-#endif
+int avtp_crf_pdu_init(void *pdu);
