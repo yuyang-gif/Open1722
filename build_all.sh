@@ -13,4 +13,4 @@ meson compile -C build/ \
     examples/cvf/cvf-talker \
     examples/cvf/cvf-listener \
     examples/ieciidc/ieciidc-talker \
-    examples/ieciidc/ieciidc-listener     
+    examples/ieciidc/ieciidc-listener
