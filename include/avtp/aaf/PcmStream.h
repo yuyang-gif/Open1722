@@ -11,7 +11,7 @@
  *      notice, this list of conditions and the following disclaimer in the
  *      documentation and/or other materials provided with the distribution.
  *    * Neither the name of COVESA, Intel Corporation nor the names of its
- *      contributors  may be used to endorse or promote products derived from 
+ *      contributors  may be used to endorse or promote products derived from
  *      this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
@@ -45,19 +45,19 @@ typedef enum {
     AVTP_AAF_PCM_STREAM_FIELD_SUBTYPE,
     AVTP_AAF_PCM_STREAM_FIELD_SV,
     AVTP_AAF_PCM_STREAM_FIELD_VERSION,
-    AVTP_AAF_PCM_STREAM_FIELD_MR,    
+    AVTP_AAF_PCM_STREAM_FIELD_MR,
     AVTP_AAF_PCM_STREAM_FIELD_TV,
     AVTP_AAF_PCM_STREAM_FIELD_SEQUENCE_NUM,
     AVTP_AAF_PCM_STREAM_FIELD_TU,
     AVTP_AAF_PCM_STREAM_FIELD_STREAM_ID,
     AVTP_AAF_PCM_STREAM_FIELD_AVTP_TIMESTAMP,
     AVTP_AAF_PCM_STREAM_FIELD_FORMAT,
-	AVTP_AAF_PCM_STREAM_FIELD_NSR,
-	AVTP_AAF_PCM_STREAM_FIELD_CHANNELS_PER_FRAME,
-	AVTP_AAF_PCM_STREAM_FIELD_BIT_DEPTH,	
-    AVTP_AAF_PCM_STREAM_FIELD_STREAM_DATA_LENGTH,    
+    AVTP_AAF_PCM_STREAM_FIELD_NSR,
+    AVTP_AAF_PCM_STREAM_FIELD_CHANNELS_PER_FRAME,
+    AVTP_AAF_PCM_STREAM_FIELD_BIT_DEPTH,
+    AVTP_AAF_PCM_STREAM_FIELD_STREAM_DATA_LENGTH,
     AVTP_AAF_PCM_STREAM_FIELD_SP,
-    AVTP_AAF_PCM_STREAM_FIELD_EVT,    
+    AVTP_AAF_PCM_STREAM_FIELD_EVT,
     AVTP_AAF_PCM_STREAM_FIELD_MAX
 } Avtp_AafPcmStreamFields_t;
 
@@ -72,16 +72,16 @@ typedef enum {
 } Avtp_AafFormat_t;
 
 typedef enum {
-    AVTP_AAF_PCM_NSR_USER = 0,	
-    AVTP_AAF_PCM_NSR_8KHZ,	
-    AVTP_AAF_PCM_NSR_16KHZ,	
+    AVTP_AAF_PCM_NSR_USER = 0,
+    AVTP_AAF_PCM_NSR_8KHZ,
+    AVTP_AAF_PCM_NSR_16KHZ,
     AVTP_AAF_PCM_NSR_32KHZ,
     AVTP_AAF_PCM_NSR_44_1KHZ,
     AVTP_AAF_PCM_NSR_48KHZ,
     AVTP_AAF_PCM_NSR_88_2KHZ,
     AVTP_AAF_PCM_NSR_96KHZ,
     AVTP_AAF_PCM_NSR_176_4KHZ,
-    AVTP_AAF_PCM_NSR_192KHZ,	
+    AVTP_AAF_PCM_NSR_192KHZ,
     AVTP_AAF_PCM_NSR_24KHZ,
 } Avtp_AafNsr_t;
 
@@ -152,7 +152,7 @@ int Avtp_AafPcmStream_SetField(Avtp_AafPcmStream_t* pdu, Avtp_AafPcmStreamFields
  *    -EINVAL: If any argument is invalid.
  */
 int avtp_aaf_pdu_get(void *pdu,
-				Avtp_AafPcmStreamFields_t field, uint64_t *val);
+                Avtp_AafPcmStreamFields_t field, uint64_t *val);
 
 /**
  * @deprecated
@@ -166,7 +166,7 @@ int avtp_aaf_pdu_get(void *pdu,
  *    -EINVAL: If any argument is invalid.
  */
 int avtp_aaf_pdu_set(void *pdu, Avtp_AafPcmStreamFields_t field,
-								uint64_t val);
+                                uint64_t val);
 
 /**
  * @deprecated
