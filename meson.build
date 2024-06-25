@@ -9,8 +9,7 @@ project(
 avtp_lib = library(
     'open1722',
     [
-     'src/avtp.c',
-     'src/avtp_aaf.c',
+     'src/avtp.c',     
      'src/avtp_cvf.c',
      'src/avtp_ieciidc.c',
      'src/avtp_stream.c',
@@ -24,6 +23,8 @@ avtp_lib = library(
      'src/avtp/acf/CanBrief.c',
      'src/avtp/acf/Sensor.c',
      'src/avtp/acf/SensorBrief.c',
+     'src/avtp/aaf/PcmStream.c',
+     'src/avtp/aaf/CommonStream.c',
      'src/avtp/Udp.c',
      'src/avtp/Rvf.c',
      'src/avtp/Crf.c',
@@ -58,6 +59,12 @@ install_headers(
     'include/avtp/acf/Sensor.h',
     'include/avtp/acf/Tscf.h',
     subdir : 'avtp/acf'
+)
+
+install_headers(
+    'include/avtp/aaf/PcmStream.h',
+    'include/avtp/aaf/CommonStream.h',
+    subdir : 'avtp/aaf'
 )
 
 pkg = import('pkgconfig')

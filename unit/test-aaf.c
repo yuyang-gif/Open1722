@@ -32,7 +32,7 @@
 #include <arpa/inet.h>
 
 #include "avtp.h"
-#include "avtp_aaf.h"
+#include "avtp/aaf/PcmStream.h"
 
 static void aaf_get_field_null_pdu(void **state)
 {
