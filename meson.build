@@ -9,7 +9,7 @@ project(
 avtp_lib = library(
     'open1722',
     [
-     'src/avtp.c',     
+     'src/avtp.c',
      'src/avtp_cvf.c',
      'src/avtp_ieciidc.c',
      'src/avtp_stream.c',
