@@ -78,7 +78,7 @@
 #include "avtp.h"
 #include "avtp/cvf/Cvf.h"
 #include "avtp/cvf/H264.h"
-#include "examples/common.h"
+#include "common.h"
 #include "avtp/CommonHeader.h"
 
 #define STREAM_ID				0xAABBCCDDEEFF0001
@@ -267,7 +267,7 @@ int main(int argc, char *argv[])
 
 	argp_parse(&argp, argc, argv, 0, NULL, NULL);
 
-	fd = create_talker_socket(priority, 0);
+	fd = create_talker_socket(priority);
 	if (fd < 0)
 		return 1;
 

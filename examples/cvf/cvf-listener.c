@@ -76,7 +76,7 @@
 #include "avtp/cvf/Cvf.h"
 #include "avtp/cvf/H264.h"
 #include "avtp/CommonHeader.h"
-#include "examples/common.h"
+#include "common.h"
 
 #define STREAM_ID				0xAABBCCDDEEFF0001
 #define DATA_LEN				1400
