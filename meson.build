@@ -10,8 +10,6 @@ avtp_lib = library(
     'open1722',
     [
      'src/avtp.c',
-     'src/avtp_stream.c',
-
      'src/avtp/Utils.c',
      'src/avtp/acf/Ntscf.c',
      'src/avtp/acf/Tscf.c',
@@ -127,16 +125,6 @@ if cmocka.found()
         build_by_default: false,
     )
 
-    test_stream = executable(
-        'test-stream',
-        'unit/test-stream.c',
-        'src/avtp_stream.c',
-        include_directories: include_directories('include', 'src'),
-        link_with: avtp_lib,
-        dependencies: cmocka,
-        build_by_default: false,
-    )
-
     test_cvf = executable(
         'test-cvf',
         'unit/test-cvf.c',
@@ -157,7 +145,6 @@ if cmocka.found()
 
 
     test('AVTP API', test_avtp)
-    test('Stream API', test_stream)
     test('AAF API', test_aaf)
     test('CRF API', test_crf)
     test('CVF API', test_cvf)
