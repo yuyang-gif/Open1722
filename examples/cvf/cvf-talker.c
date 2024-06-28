@@ -75,7 +75,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "avtp.h"
 #include "avtp/cvf/Cvf.h"
 #include "avtp/cvf/H264.h"
 #include "common.h"

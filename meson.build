@@ -9,7 +9,6 @@ project(
 avtp_lib = library(
     'open1722',
     [
-     'src/avtp.c',
      'src/avtp/Utils.c',
      'src/avtp/acf/Ntscf.c',
      'src/avtp/acf/Tscf.c',

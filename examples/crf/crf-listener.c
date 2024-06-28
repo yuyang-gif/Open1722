@@ -99,7 +99,6 @@
 #include <math.h>
 #include <inttypes.h>
 
-#include "avtp.h"
 #include "avtp/Crf.h"
 #include "avtp/aaf/PcmStream.h"
 #include "common.h"

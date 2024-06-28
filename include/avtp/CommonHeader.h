@@ -51,7 +51,7 @@ typedef struct {
  * Enumeration over all IEEE 1722 header fields. The naming convention used is
  * AVTP_<MSG_TYPE>_FIELD_<FIEL_NAME>.
  */
-typedef enum {
+typedef enum Avtp_CommonHeaderField{
     /* Common AVTP header fields */
     AVTP_COMMON_HEADER_FIELD_SUBTYPE = 0,
     AVTP_COMMON_HEADER_FIELD_H,
@@ -105,3 +105,49 @@ int Avtp_CommonHeader_GetField(Avtp_CommonHeader_t* avtp_pdu, Avtp_CommonHeaderF
  * the 1722 AVTP PDU.
  */
 int Avtp_CommonHeader_SetField(Avtp_CommonHeader_t* avtp_pdu, Avtp_CommonHeaderField_t field, uint64_t value);
+
+/******************************************************************************
+ * Legacy API (deprecated)
+ *****************************************************************************/
+
+struct avtp_common_pdu {
+    uint32_t subtype_data;
+    uint8_t pdu_specific[0];
+} __attribute__ ((__packed__));
+
+struct avtp_stream_pdu {
+    uint32_t subtype_data;
+    uint64_t stream_id;
+    uint32_t avtp_time;
+    uint32_t format_specific;
+    uint32_t packet_info;
+    uint8_t avtp_payload[0];
+} __attribute__ ((__packed__));
+
+#define AVTP_FIELD_SUBTYPE      (AVTP_COMMON_HEADER_FIELD_SUBTYPE)
+#define AVTP_FIELD_VERSION      (AVTP_COMMON_HEADER_FIELD_VERSION)
+#define AVTP_FIELD_MAX          (AVTP_COMMON_HEADER_FIELD_MAX)
+
+/* Get value from Common AVTPDU field.
+ * @pdu: Pointer to PDU struct.
+ * @field: PDU field to be retrieved.
+ * @val: Pointer to variable which the retrieved value should be saved.
+ *
+ * Returns:
+ *    0: Success.
+ *    -EINVAL: If any argument is invalid.
+ */
+int avtp_pdu_get(const struct avtp_common_pdu *pdu, Avtp_CommonHeaderField_t field,
+                                uint32_t *val);
+
+/* Set value from Common AVTPDU field.
+ * @pdu: Pointer to PDU struct.
+ * @field: PDU field to be set.
+ * @val: Value to be set.
+ *
+ * Returns:
+ *    0: Success.
+ *    -EINVAL: If any argument is invalid.
+ */
+int avtp_pdu_set(struct avtp_common_pdu *pdu, Avtp_CommonHeaderField_t field,
+                                uint32_t val);

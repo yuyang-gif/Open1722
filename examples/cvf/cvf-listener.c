@@ -72,7 +72,6 @@
 #include <unistd.h>
 #include <inttypes.h>
 
-#include "avtp.h"
 #include "avtp/cvf/Cvf.h"
 #include "avtp/cvf/H264.h"
 #include "avtp/CommonHeader.h"
