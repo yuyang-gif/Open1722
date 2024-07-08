@@ -100,217 +100,217 @@ static uint8_t seq_num;
 enum process_result {PROCESS_OK, PROCESS_NONE, PROCESS_ERROR};
 
 static struct argp_option options[] = {
-	{"dst-addr", 'd', "MACADDR", 0, "Stream Destination MAC address" },
-	{"ifname", 'i', "IFNAME", 0, "Network Interface" },
-	{"max-transit-time", 'm', "MSEC", 0, "Maximum Transit Time in ms" },
-	{"prio", 'p', "NUM", 0, "SO_PRIORITY to be set in socket" },
-	{ 0 }
+    {"dst-addr", 'd', "MACADDR", 0, "Stream Destination MAC address" },
+    {"ifname", 'i', "IFNAME", 0, "Network Interface" },
+    {"max-transit-time", 'm', "MSEC", 0, "Maximum Transit Time in ms" },
+    {"prio", 'p', "NUM", 0, "SO_PRIORITY to be set in socket" },
+    { 0 }
 };
 
 static error_t parser(int key, char *arg, struct argp_state *state)
 {
-	int res;
+    int res;
 
-	switch (key) {
-	case 'd':
-		res = sscanf(arg, "%hhx:%hhx:%hhx:%hhx:%hhx:%hhx",
-					&macaddr[0], &macaddr[1], &macaddr[2],
-					&macaddr[3], &macaddr[4], &macaddr[5]);
-		if (res != 6) {
-			fprintf(stderr, "Invalid address\n");
-			exit(EXIT_FAILURE);
-		}
+    switch (key) {
+    case 'd':
+        res = sscanf(arg, "%hhx:%hhx:%hhx:%hhx:%hhx:%hhx",
+                    &macaddr[0], &macaddr[1], &macaddr[2],
+                    &macaddr[3], &macaddr[4], &macaddr[5]);
+        if (res != 6) {
+            fprintf(stderr, "Invalid address\n");
+            exit(EXIT_FAILURE);
+        }
 
-		break;
-	case 'i':
-		strncpy(ifname, arg, sizeof(ifname) - 1);
-		break;
-	case 'm':
-		max_transit_time = atoi(arg);
-		break;
-	case 'p':
-		priority = atoi(arg);
-		break;
-	}
+        break;
+    case 'i':
+        strncpy(ifname, arg, sizeof(ifname) - 1);
+        break;
+    case 'm':
+        max_transit_time = atoi(arg);
+        break;
+    case 'p':
+        priority = atoi(arg);
+        break;
+    }
 
-	return 0;
+    return 0;
 }
 
 static struct argp argp = { options, parser };
 
 static int init_pdu(Avtp_Cvf_t* cvf)
 {
-	Avtp_Cvf_Init(cvf);
-	Avtp_Cvf_SetField(cvf, AVTP_CVF_FIELD_FORMAT_SUBTYPE, AVTP_CVF_FORMAT_SUBTYPE_H264);
-	Avtp_Cvf_SetField(cvf, AVTP_CVF_FIELD_TV, 1);
-	Avtp_Cvf_SetField(cvf, AVTP_CVF_FIELD_STREAM_ID, STREAM_ID);
-	Avtp_Cvf_SetField(cvf, AVTP_CVF_FIELD_M, 1);
-	Avtp_Cvf_SetField(cvf, AVTP_CVF_FIELD_PTV, 0);
+    Avtp_Cvf_Init(cvf);
+    Avtp_Cvf_SetField(cvf, AVTP_CVF_FIELD_FORMAT_SUBTYPE, AVTP_CVF_FORMAT_SUBTYPE_H264);
+    Avtp_Cvf_SetField(cvf, AVTP_CVF_FIELD_TV, 1);
+    Avtp_Cvf_SetField(cvf, AVTP_CVF_FIELD_STREAM_ID, STREAM_ID);
+    Avtp_Cvf_SetField(cvf, AVTP_CVF_FIELD_M, 1);
+    Avtp_Cvf_SetField(cvf, AVTP_CVF_FIELD_PTV, 0);
 
-	Avtp_H264_t* h264 = (Avtp_H264_t*)(&cvf->payload);
-	Avtp_H264_Init(h264);
-	Avtp_H264_SetField(h264, AVTP_H264_FIELD_TIMESTAMP, 0);
+    Avtp_H264_t* h264 = (Avtp_H264_t*)(&cvf->payload);
+    Avtp_H264_Init(h264);
+    Avtp_H264_SetField(h264, AVTP_H264_FIELD_TIMESTAMP, 0);
 
-	return 0;
+    return 0;
 }
 
 static ssize_t fill_buffer(void)
 {
-	ssize_t n;
+    ssize_t n;
 
-	n = read(STDIN_FILENO, buffer + buffer_level,
-					sizeof(buffer) - buffer_level);
-	if (n < 0) {
-		perror("Could not read from standard input");
-	}
+    n = read(STDIN_FILENO, buffer + buffer_level,
+                    sizeof(buffer) - buffer_level);
+    if (n < 0) {
+        perror("Could not read from standard input");
+    }
 
-	buffer_level += n;
+    buffer_level += n;
 
-	return n;
+    return n;
 }
 
 static ssize_t start_code_position(size_t offset)
 {
-	assert(offset < buffer_level);
+    assert(offset < buffer_level);
 
-	/* Simplified Boyer-Moore, inspired by gstreamer */
-	while (offset < buffer_level - 2) {
-		if (buffer[offset + 2] == 0x1) {
-			if (buffer[offset] == 0x0 && buffer[offset + 1] == 0x0)
-				return offset;
-			offset += 3;
-		} else if (buffer[offset + 2] == 0x0) {
-			offset++;
-		} else {
-			offset += 3;
-		}
-	}
+    /* Simplified Boyer-Moore, inspired by gstreamer */
+    while (offset < buffer_level - 2) {
+        if (buffer[offset + 2] == 0x1) {
+            if (buffer[offset] == 0x0 && buffer[offset + 1] == 0x0)
+                return offset;
+            offset += 3;
+        } else if (buffer[offset + 2] == 0x0) {
+            offset++;
+        } else {
+            offset += 3;
+        }
+    }
 
-	return -1;
+    return -1;
 }
 
 static int prepare_packet(Avtp_Cvf_t* cvfHeader, char *nal_data, size_t nal_data_len)
 {
-	int res;
-	uint32_t avtp_time;
-	Avtp_H264_t* h264Header = (Avtp_H264_t*)(&cvfHeader->payload);
-	uint8_t* h264Payload = (uint8_t*)(&h264Header->payload);
+    int res;
+    uint32_t avtp_time;
+    Avtp_H264_t* h264Header = (Avtp_H264_t*)(&cvfHeader->payload);
+    uint8_t* h264Payload = (uint8_t*)(&h264Header->payload);
 
-	res = calculate_avtp_time(&avtp_time, max_transit_time);
-	if (res < 0) {
-		fprintf(stderr, "Failed to calculate avtp time\n");
-		return -1;
-	}
+    res = calculate_avtp_time(&avtp_time, max_transit_time);
+    if (res < 0) {
+        fprintf(stderr, "Failed to calculate avtp time\n");
+        return -1;
+    }
 
-	Avtp_Cvf_SetField(cvfHeader, AVTP_CVF_FIELD_AVTP_TIMESTAMP, avtp_time);
-	Avtp_Cvf_SetField(cvfHeader, AVTP_CVF_FIELD_SEQUENCE_NUM, seq_num++);
-	Avtp_Cvf_SetField(cvfHeader, AVTP_CVF_FIELD_STREAM_DATA_LENGTH, nal_data_len + AVTP_H264_HEADER_LEN);
+    Avtp_Cvf_SetField(cvfHeader, AVTP_CVF_FIELD_AVTP_TIMESTAMP, avtp_time);
+    Avtp_Cvf_SetField(cvfHeader, AVTP_CVF_FIELD_SEQUENCE_NUM, seq_num++);
+    Avtp_Cvf_SetField(cvfHeader, AVTP_CVF_FIELD_STREAM_DATA_LENGTH, nal_data_len + AVTP_H264_HEADER_LEN);
 
-	memcpy(h264Payload, nal_data, nal_data_len);
+    memcpy(h264Payload, nal_data, nal_data_len);
 
-	return 0;
+    return 0;
 }
 
 static int process_nal(Avtp_Cvf_t* pdu, bool process_last,
-							size_t* nal_len)
+                            size_t* nal_len)
 {
-	int res;
-	ssize_t start, end;
+    int res;
+    ssize_t start, end;
 
-	*nal_len = 0;
+    *nal_len = 0;
 
-	start = start_code_position(0);
-	if (start == -1) {
-		fprintf(stderr, "Unable to find NAL start\n");
-		return PROCESS_NONE;
-	}
-	/* Now, let's find where the next starts. This is where current ends */
-	end = start_code_position(start + 1);
-	if (end == -1) {
-		if (process_last == false) {
-			return PROCESS_NONE;
-		} else {
-			end = buffer_level;
-		}
-	}
+    start = start_code_position(0);
+    if (start == -1) {
+        fprintf(stderr, "Unable to find NAL start\n");
+        return PROCESS_NONE;
+    }
+    /* Now, let's find where the next starts. This is where current ends */
+    end = start_code_position(start + 1);
+    if (end == -1) {
+        if (process_last == false) {
+            return PROCESS_NONE;
+        } else {
+            end = buffer_level;
+        }
+    }
 
-	*nal_len = end - start;
-	if (*nal_len > DATA_LEN) {
-		fprintf(stderr, "NAL length bigger than expected. Expected %u, "
-					"found %zd\n", DATA_LEN, *nal_len);
-		goto err;
-	}
+    *nal_len = end - start;
+    if (*nal_len > DATA_LEN) {
+        fprintf(stderr, "NAL length bigger than expected. Expected %u, "
+                    "found %zd\n", DATA_LEN, *nal_len);
+        goto err;
+    }
 
-	/* Sets AVTP packet headers and content - the NAL unit */
-	res = prepare_packet(pdu, &buffer[start], *nal_len);
-	if (res < 0) {
-		goto err;
-	}
+    /* Sets AVTP packet headers and content - the NAL unit */
+    res = prepare_packet(pdu, &buffer[start], *nal_len);
+    if (res < 0) {
+        goto err;
+    }
 
-	/* Finally, let's offset any remaining data on the buffer to the
-	 * beginning. Not really efficient, but keep things simple */
-	memmove(buffer, buffer + end, buffer_level - end);
-	buffer_level -= end;
+    /* Finally, let's offset any remaining data on the buffer to the
+     * beginning. Not really efficient, but keep things simple */
+    memmove(buffer, buffer + end, buffer_level - end);
+    buffer_level -= end;
 
-	return PROCESS_OK;
+    return PROCESS_OK;
 
 err:
-	return PROCESS_ERROR;
+    return PROCESS_ERROR;
 }
 
 int main(int argc, char *argv[])
 {
-	int fd, res;
-	struct sockaddr_ll sk_addr;
-	uint8_t* pdu = alloca(MAX_PDU_SIZE);
-	Avtp_Cvf_t* cvf = (Avtp_Cvf_t*)pdu;
+    int fd, res;
+    struct sockaddr_ll sk_addr;
+    uint8_t* pdu = alloca(MAX_PDU_SIZE);
+    Avtp_Cvf_t* cvf = (Avtp_Cvf_t*)pdu;
 
-	argp_parse(&argp, argc, argv, 0, NULL, NULL);
+    argp_parse(&argp, argc, argv, 0, NULL, NULL);
 
-	fd = create_talker_socket(priority);
-	if (fd < 0)
-		return 1;
+    fd = create_talker_socket(priority);
+    if (fd < 0)
+        return 1;
 
-	res = setup_socket_address(fd, ifname, macaddr, ETH_P_TSN, &sk_addr);
-	if (res < 0)
-		goto err;
+    res = setup_socket_address(fd, ifname, macaddr, ETH_P_TSN, &sk_addr);
+    if (res < 0)
+        goto err;
 
-	res = init_pdu(cvf);
-	if (res < 0)
-		goto err;
+    res = init_pdu(cvf);
+    if (res < 0)
+        goto err;
 
-	while (1) {
-		ssize_t n;
-		bool end = false;
+    while (1) {
+        ssize_t n;
+        bool end = false;
 
-		n = fill_buffer();
-		if (n == 0)
-			end = true;
+        n = fill_buffer();
+        if (n == 0)
+            end = true;
 
-		while (buffer_level > 0) {
-			enum process_result pr =
-					process_nal(cvf, end, (size_t *)&n);
-			if (pr == PROCESS_ERROR)
-				goto err;
-			if (pr == PROCESS_NONE)
-				break;
+        while (buffer_level > 0) {
+            enum process_result pr =
+                    process_nal(cvf, end, (size_t *)&n);
+            if (pr == PROCESS_ERROR)
+                goto err;
+            if (pr == PROCESS_NONE)
+                break;
 
-			n = sendto(fd, pdu, AVTP_FULL_HEADER_LEN + n, 0,
-				(struct sockaddr *) &sk_addr, sizeof(sk_addr));
-			if (n < 0) {
-				perror("Failed to send data");
-				goto err;
-			}
-		}
+            n = sendto(fd, pdu, AVTP_FULL_HEADER_LEN + n, 0,
+                (struct sockaddr *) &sk_addr, sizeof(sk_addr));
+            if (n < 0) {
+                perror("Failed to send data");
+                goto err;
+            }
+        }
 
-		if (end)
-			break;
-	}
+        if (end)
+            break;
+    }
 
-	close(fd);
-	return 0;
+    close(fd);
+    return 0;
 
 err:
-	close(fd);
-	return 1;
+    close(fd);
+    return 1;
 }
