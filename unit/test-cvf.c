@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2019, Intel Corporation
+ * Copyright (c) 2024, COVESA
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -34,7 +35,8 @@
 #include <arpa/inet.h>
 
 #include "avtp.h"
-#include "avtp_cvf.h"
+#include "avtp/cvf/Cvf.h"
+#include "avtp/cvf/H264.h"
 
 static void cvf_get_field_null_pdu(void **state)
 {
@@ -121,7 +123,7 @@ static void cvf_get_field_seq_num(void **state)
     /* Set 'sequence_num' field to 0x55. */
     pdu.subtype_data = htonl(0x00005500);
 
-    res = avtp_cvf_pdu_get(&pdu, AVTP_CVF_FIELD_SEQ_NUM, &val);
+    res = avtp_cvf_pdu_get(&pdu, AVTP_CVF_FIELD_SEQUENCE_NUM, &val);
 
     assert_int_equal(res, 0);
     assert_true(val == 0x55);
@@ -166,7 +168,7 @@ static void cvf_get_field_timestamp(void **state)
     /* Set 'avtp_timestamp' field to 0x80C0FFEE. */
     pdu.avtp_time = htonl(0x80C0FFEE);
 
-    res = avtp_cvf_pdu_get(&pdu, AVTP_CVF_FIELD_TIMESTAMP, &val);
+    res = avtp_cvf_pdu_get(&pdu, AVTP_CVF_FIELD_AVTP_TIMESTAMP, &val);
 
     assert_int_equal(res, 0);
     assert_true(val == 0x80C0FFEE);
@@ -211,7 +213,7 @@ static void cvf_get_field_data_len(void **state)
     /* Set 'stream_data_length' field to 0xAAAA. */
     pdu.packet_info = htonl(0xAAAA0000);
 
-    res = avtp_cvf_pdu_get(&pdu, AVTP_CVF_FIELD_STREAM_DATA_LEN, &val);
+    res = avtp_cvf_pdu_get(&pdu, AVTP_CVF_FIELD_STREAM_DATA_LENGTH, &val);
 
     assert_int_equal(res, 0);
     assert_true(val == 0xAAAA);
@@ -316,7 +318,7 @@ static void cvf_set_field_seq_num(void **state)
     int res;
     struct avtp_stream_pdu pdu = { 0 };
 
-    res = avtp_cvf_pdu_set(&pdu, AVTP_CVF_FIELD_SEQ_NUM, 0x55);
+    res = avtp_cvf_pdu_set(&pdu, AVTP_CVF_FIELD_SEQUENCE_NUM, 0x55);
 
     assert_int_equal(res, 0);
     assert_true(ntohl(pdu.subtype_data) == 0x00005500);
@@ -362,7 +364,7 @@ static void cvf_set_field_timestamp(void **state)
     int res;
     struct avtp_stream_pdu pdu = { 0 };
 
-    res = avtp_cvf_pdu_set(&pdu, AVTP_CVF_FIELD_TIMESTAMP, 0x80C0FFEE);
+    res = avtp_cvf_pdu_set(&pdu, AVTP_CVF_FIELD_AVTP_TIMESTAMP, 0x80C0FFEE);
 
     assert_int_equal(res, 0);
     assert_true(ntohl(pdu.avtp_time) == 0x80C0FFEE);
@@ -409,7 +411,7 @@ static void cvf_set_field_data_len(void **state)
     int res;
     struct avtp_stream_pdu pdu = { 0 };
 
-    res = avtp_cvf_pdu_set(&pdu, AVTP_CVF_FIELD_STREAM_DATA_LEN, 0xAAAA);
+    res = avtp_cvf_pdu_set(&pdu, AVTP_CVF_FIELD_STREAM_DATA_LENGTH, 0xAAAA);
 
     assert_int_equal(res, 0);
     assert_true(ntohl(pdu.packet_info) == 0xAAAA0000);
@@ -457,15 +459,6 @@ static void cvf_pdu_init_null_pdu(void **state)
     assert_int_equal(res, -EINVAL);
 }
 
-static void cvf_pdu_init_invalid_subtype(void **state)
-{
-    int res;
-    struct avtp_stream_pdu pdu;
-
-    res = avtp_cvf_pdu_init(&pdu, AVTP_CVF_FORMAT_SUBTYPE_JPEG2000 + 1);
-    assert_int_equal(res, -EINVAL);
-}
-
 static void cvf_pdu_init(void **state)
 {
     int res;
@@ -481,9 +474,7 @@ static void cvf_pdu_init(void **state)
     assert_true(pdu.packet_info == 0);
 }
 
-/**** Tests for H.264 fields ****/
-
-static void cvf_get_field_h264_ptv(void **state)
+static void cvf_get_field_ptv(void **state)
 {
     int res;
     uint64_t val;
@@ -492,37 +483,18 @@ static void cvf_get_field_h264_ptv(void **state)
     /* Set 'ptv' field to 1. */
     pdu.packet_info = htonl(0x00002000);
 
-    res = avtp_cvf_pdu_get(&pdu, AVTP_CVF_FIELD_H264_PTV, &val);
+    res = avtp_cvf_pdu_get(&pdu, AVTP_CVF_FIELD_PTV, &val);
 
     assert_int_equal(res, 0);
     assert_true(val == 1);
 }
 
-static void cvf_get_field_h264_timestamp(void **state)
-{
-    int res;
-    uint64_t val;
-    struct avtp_stream_pdu *pdu =
-        alloca(sizeof(struct avtp_stream_pdu) + sizeof(uint32_t));
-    struct avtp_cvf_h264_payload *pay =
-            (struct avtp_cvf_h264_payload *)pdu->avtp_payload;
-
-    /* Set 'h264_timestamp' field (which lives in h264_header) to
-     * 0x80C0FFEE. */
-    pay->h264_header = htonl(0x80C0FFEE);
-
-    res = avtp_cvf_pdu_get(pdu, AVTP_CVF_FIELD_H264_TIMESTAMP, &val);
-
-    assert_int_equal(res, 0);
-    assert_true(val == 0x80C0FFEE);
-}
-
-static void cvf_set_field_h264_ptv(void **state)
+static void cvf_set_field_ptv(void **state)
 {
     int res;
     struct avtp_stream_pdu pdu = { 0 };
 
-    res = avtp_cvf_pdu_set(&pdu, AVTP_CVF_FIELD_H264_PTV, 1);
+    res = avtp_cvf_pdu_set(&pdu, AVTP_CVF_FIELD_PTV, 1);
 
     assert_int_equal(res, 0);
     assert_true(pdu.subtype_data == 0);
@@ -532,24 +504,34 @@ static void cvf_set_field_h264_ptv(void **state)
     assert_true(ntohl(pdu.packet_info) == 0x00002000);
 }
 
+/**** Tests for H.264 fields ****/
+
+static void cvf_get_field_h264_timestamp(void **state)
+{
+    int res;
+    uint64_t val;
+    Avtp_H264_t pdu;
+
+    /* Set 'h264_timestamp' field (which lives in h264_header) to
+     * 0x80C0FFEE. */
+    uint32_t value = htonl(0x80C0FFEE);
+    memcpy(&pdu.header, &value, 4);
+
+    res = Avtp_H264_GetField(&pdu, AVTP_H264_FIELD_TIMESTAMP, &val);
+
+    assert_int_equal(res, 0);
+    assert_true(val == 0x80C0FFEE);
+}
+
 static void cvf_set_field_h264_timestamp(void **state)
 {
     int res;
-    struct avtp_stream_pdu *pdu =
-        alloca(sizeof(struct avtp_stream_pdu) + sizeof(uint32_t));
-    struct avtp_cvf_h264_payload *pay =
-            (struct avtp_cvf_h264_payload *)pdu->avtp_payload;
-    memset(pdu, 0, sizeof(struct avtp_stream_pdu) + sizeof(uint32_t));
+    Avtp_H264_t pdu;
 
-    res = avtp_cvf_pdu_set(pdu, AVTP_CVF_FIELD_H264_TIMESTAMP, 0x80C0FFEE);
+    res = Avtp_H264_SetField(&pdu, AVTP_H264_FIELD_TIMESTAMP, 0x80C0FFEE);
 
     assert_int_equal(res, 0);
-    assert_true(pdu->avtp_time == 0);
-    assert_true(pdu->subtype_data == 0);
-    assert_true(pdu->stream_id == 0);
-    assert_true(pdu->format_specific == 0);
-    assert_true(pdu->packet_info == 0);
-    assert_true(ntohl(pay->h264_header) == 0x80C0FFEE);
+    assert_true(ntohl(*(uint32_t*)(&pdu.header)) == 0x80C0FFEE);
 }
 
 int main(void)
@@ -570,7 +552,7 @@ int main(void)
         cmocka_unit_test(cvf_get_field_data_len),
         cmocka_unit_test(cvf_get_field_m),
         cmocka_unit_test(cvf_get_field_evt),
-        cmocka_unit_test(cvf_get_field_h264_ptv),
+        cmocka_unit_test(cvf_get_field_ptv),
         cmocka_unit_test(cvf_get_field_h264_timestamp),
         cmocka_unit_test(cvf_set_field_null_pdu),
         cmocka_unit_test(cvf_set_field_invalid_field),
@@ -586,10 +568,9 @@ int main(void)
         cmocka_unit_test(cvf_set_field_data_len),
         cmocka_unit_test(cvf_set_field_m),
         cmocka_unit_test(cvf_set_field_evt),
-        cmocka_unit_test(cvf_set_field_h264_ptv),
+        cmocka_unit_test(cvf_set_field_ptv),
         cmocka_unit_test(cvf_set_field_h264_timestamp),
         cmocka_unit_test(cvf_pdu_init_null_pdu),
-        cmocka_unit_test(cvf_pdu_init_invalid_subtype),
         cmocka_unit_test(cvf_pdu_init),
     };
 

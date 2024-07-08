@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2024, COVESA
  * Copyright (c) 2019, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
@@ -9,9 +10,9 @@
  *    * Redistributions in binary form must reproduce the above copyright
  *      notice, this list of conditions and the following disclaimer in the
  *      documentation and/or other materials provided with the distribution.
- *    * Neither the name of Intel Corporation nor the names of its contributors
- *      may be used to endorse or promote products derived from this software
- *      without specific prior written permission.
+ *    * Neither the name of COVESA, Intel Corporation nor the names of its
+ *      contributors  may be used to endorse or promote products derived from
+ *      this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -23,6 +24,8 @@
  * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  */
 
 /* CVF Talker example.
@@ -73,15 +76,16 @@
 #include <unistd.h>
 
 #include "avtp.h"
-#include "avtp_cvf.h"
+#include "avtp/cvf/Cvf.h"
+#include "avtp/cvf/H264.h"
 #include "common.h"
 #include "avtp/CommonHeader.h"
 
-#define STREAM_ID		0xAABBCCDDEEFF0001
-#define DATA_LEN		1400
-#define AVTP_H264_HEADER_LEN	(sizeof(uint32_t))
-#define AVTP_FULL_HEADER_LEN	(sizeof(struct avtp_stream_pdu) + AVTP_H264_HEADER_LEN)
-#define MAX_PDU_SIZE		(AVTP_FULL_HEADER_LEN + DATA_LEN)
+#define STREAM_ID				0xAABBCCDDEEFF0001
+#define DATA_LEN				1400
+#define AVTP_H264_HEADER_LEN	(sizeof(Avtp_H264_t))
+#define AVTP_FULL_HEADER_LEN	(sizeof(Avtp_Cvf_t) + sizeof(Avtp_H264_t))
+#define MAX_PDU_SIZE			(AVTP_FULL_HEADER_LEN + DATA_LEN)
 
 static char ifname[IFNAMSIZ];
 static uint8_t macaddr[ETH_ALEN];
@@ -134,36 +138,18 @@ static error_t parser(int key, char *arg, struct argp_state *state)
 
 static struct argp argp = { options, parser };
 
-static int init_pdu(struct avtp_stream_pdu *pdu)
+static int init_pdu(Avtp_Cvf_t* cvf)
 {
-    int res;
+    Avtp_Cvf_Init(cvf);
+    Avtp_Cvf_SetField(cvf, AVTP_CVF_FIELD_FORMAT_SUBTYPE, AVTP_CVF_FORMAT_SUBTYPE_H264);
+    Avtp_Cvf_SetField(cvf, AVTP_CVF_FIELD_TV, 1);
+    Avtp_Cvf_SetField(cvf, AVTP_CVF_FIELD_STREAM_ID, STREAM_ID);
+    Avtp_Cvf_SetField(cvf, AVTP_CVF_FIELD_M, 1);
+    Avtp_Cvf_SetField(cvf, AVTP_CVF_FIELD_PTV, 0);
 
-    res = avtp_cvf_pdu_init(pdu, AVTP_CVF_FORMAT_SUBTYPE_H264);
-    if (res < 0)
-        return -1;
-
-    res = avtp_cvf_pdu_set(pdu, AVTP_CVF_FIELD_TV, 1);
-    if (res < 0)
-        return -1;
-
-    res = avtp_cvf_pdu_set(pdu, AVTP_CVF_FIELD_STREAM_ID, STREAM_ID);
-    if (res < 0)
-        return -1;
-
-    /* Just state that all data is part of the frame (M=1) */
-    res = avtp_cvf_pdu_set(pdu, AVTP_CVF_FIELD_M, 1);
-    if (res < 0)
-        return -1;
-
-    /* No H.264 timestamp now */
-    res = avtp_cvf_pdu_set(pdu, AVTP_CVF_FIELD_H264_TIMESTAMP, 0);
-    if (res < 0)
-        return -1;
-
-    /* No H.264 timestamp means no PTV */
-    res = avtp_cvf_pdu_set(pdu, AVTP_CVF_FIELD_H264_PTV, 0);
-    if (res < 0)
-        return -1;
+    Avtp_H264_t* h264 = (Avtp_H264_t*)(&cvf->payload);
+    Avtp_H264_Init(h264);
+    Avtp_H264_SetField(h264, AVTP_H264_FIELD_TIMESTAMP, 0);
 
     return 0;
 }
@@ -203,13 +189,12 @@ static ssize_t start_code_position(size_t offset)
     return -1;
 }
 
-static int prepare_packet(struct avtp_stream_pdu *pdu, char *nal_data,
-                            size_t nal_data_len)
+static int prepare_packet(Avtp_Cvf_t* cvfHeader, char *nal_data, size_t nal_data_len)
 {
     int res;
     uint32_t avtp_time;
-    struct avtp_cvf_h264_payload *h264_pay =
-            (struct avtp_cvf_h264_payload *) pdu->avtp_payload;
+    Avtp_H264_t* h264Header = (Avtp_H264_t*)(&cvfHeader->payload);
+    uint8_t* h264Payload = (uint8_t*)(&h264Header->payload);
 
     res = calculate_avtp_time(&avtp_time, max_transit_time);
     if (res < 0) {
@@ -217,29 +202,17 @@ static int prepare_packet(struct avtp_stream_pdu *pdu, char *nal_data,
         return -1;
     }
 
-    res = avtp_cvf_pdu_set(pdu, AVTP_CVF_FIELD_TIMESTAMP,
-                            avtp_time);
-    if (res < 0)
-        return -1;
+    Avtp_Cvf_SetField(cvfHeader, AVTP_CVF_FIELD_AVTP_TIMESTAMP, avtp_time);
+    Avtp_Cvf_SetField(cvfHeader, AVTP_CVF_FIELD_SEQUENCE_NUM, seq_num++);
+    Avtp_Cvf_SetField(cvfHeader, AVTP_CVF_FIELD_STREAM_DATA_LENGTH, nal_data_len + AVTP_H264_HEADER_LEN);
 
-    res = avtp_cvf_pdu_set(pdu, AVTP_CVF_FIELD_SEQ_NUM, seq_num++);
-    if (res < 0)
-        return -1;
-
-    /* Stream data len includes AVTP H264 header, as this is part
-     * of the payload too*/
-    res = avtp_cvf_pdu_set(pdu, AVTP_CVF_FIELD_STREAM_DATA_LEN,
-                    nal_data_len + AVTP_H264_HEADER_LEN);
-    if (res < 0)
-        return -1;
-
-    memcpy(h264_pay->h264_data, nal_data, nal_data_len);
+    memcpy(h264Payload, nal_data, nal_data_len);
 
     return 0;
 }
 
-static int process_nal(struct avtp_stream_pdu *pdu, bool process_last,
-                            size_t *nal_len)
+static int process_nal(Avtp_Cvf_t* pdu, bool process_last,
+                            size_t* nal_len)
 {
     int res;
     ssize_t start, end;
@@ -289,7 +262,8 @@ int main(int argc, char *argv[])
 {
     int fd, res;
     struct sockaddr_ll sk_addr;
-    struct avtp_stream_pdu *pdu = alloca(MAX_PDU_SIZE);
+    uint8_t* pdu = alloca(MAX_PDU_SIZE);
+    Avtp_Cvf_t* cvf = (Avtp_Cvf_t*)pdu;
 
     argp_parse(&argp, argc, argv, 0, NULL, NULL);
 
@@ -301,7 +275,7 @@ int main(int argc, char *argv[])
     if (res < 0)
         goto err;
 
-    res = init_pdu(pdu);
+    res = init_pdu(cvf);
     if (res < 0)
         goto err;
 
@@ -315,7 +289,7 @@ int main(int argc, char *argv[])
 
         while (buffer_level > 0) {
             enum process_result pr =
-                    process_nal(pdu, end, (size_t *)&n);
+                    process_nal(cvf, end, (size_t *)&n);
             if (pr == PROCESS_ERROR)
                 goto err;
             if (pr == PROCESS_NONE)
