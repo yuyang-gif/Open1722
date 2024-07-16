@@ -34,8 +34,9 @@
 #include <cmocka.h>
 #include <arpa/inet.h>
 #include <stdio.h>
+#include <errno.h>
 
-#include "avtp.h"
+#include "avtp/CommonHeader.h"
 #include "avtp/Rvf.h"
 
 static void rvf_get_field_null_pdu(void **state)

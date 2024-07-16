@@ -30,8 +30,9 @@
 #include <setjmp.h>
 #include <cmocka.h>
 #include <arpa/inet.h>
+#include <errno.h>
 
-#include "avtp.h"
+#include "avtp/CommonHeader.h"
 #include "avtp/aaf/PcmStream.h"
 
 static void aaf_get_field_null_pdu(void **state)

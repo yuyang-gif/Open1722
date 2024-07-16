@@ -62,7 +62,6 @@
 #include <unistd.h>
 #include <math.h>
 
-#include "avtp.h"
 #include "avtp/Crf.h"
 #include "common.h"
 #include "avtp/CommonHeader.h"

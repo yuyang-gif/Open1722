@@ -52,3 +52,24 @@ int Avtp_CommonHeader_SetField(Avtp_CommonHeader_t* avtp_pdu, Avtp_CommonHeaderF
 {
     return Avtp_SetField(Avtp_CommonHeaderFieldDesc, AVTP_COMMON_HEADER_FIELD_MAX, (uint8_t*)avtp_pdu, (uint8_t)field, value);        
 }
+
+/******************************************************************************
+ * Legacy API
+ *****************************************************************************/
+int avtp_pdu_get(const struct avtp_common_pdu *pdu, Avtp_CommonHeaderField_t field,
+                                uint32_t *val)
+{
+    uint64_t temp;
+    int ret;
+    ret = Avtp_CommonHeader_GetField((Avtp_CommonHeader_t*) pdu, field, &temp);
+    if (val == NULL) return -EINVAL;
+    
+    *val = (uint32_t)temp;
+    return ret;
+}
+
+int avtp_pdu_set(struct avtp_common_pdu *pdu, Avtp_CommonHeaderField_t field,
+                                uint32_t value)
+{
+    return Avtp_CommonHeader_SetField((Avtp_CommonHeader_t*) pdu, field, value);
+}
