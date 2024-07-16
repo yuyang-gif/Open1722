@@ -10,7 +10,6 @@ avtp_lib = library(
     'open1722',
     [
      'src/avtp.c',
-     'src/avtp_ieciidc.c',
      'src/avtp_stream.c',
 
      'src/avtp/Utils.c',
@@ -156,14 +155,6 @@ if cmocka.found()
         build_by_default: false,
     )
 
-    test_ieciidc = executable(
-        'test-ieciidc',
-        'unit/test-ieciidc.c',
-        include_directories: include_directories('include'),
-        link_with: avtp_lib,
-        dependencies: cmocka,
-        build_by_default: false,
-    )
 
     test('AVTP API', test_avtp)
     test('Stream API', test_stream)
@@ -171,7 +162,6 @@ if cmocka.found()
     test('CRF API', test_crf)
     test('CVF API', test_cvf)
     test('RVF API', test_rvf)
-    test('IEC61883/IIDC API', test_ieciidc)
     test('ACF CAN API', test_can)
 endif
 
