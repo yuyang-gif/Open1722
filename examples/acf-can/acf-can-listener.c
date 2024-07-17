@@ -41,7 +41,7 @@
 #include <linux/can/raw.h>
 #include <sys/ioctl.h>
 
-#include "common.h"
+#include "common/common.h"
 #include "avtp/Udp.h"
 #include "avtp/acf/Ntscf.h"
 #include "avtp/acf/Tscf.h"

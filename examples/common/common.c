@@ -41,7 +41,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "common.h"
+#include "common/common.h"
 
 #define NSEC_PER_SEC		1000000000ULL
 #define NSEC_PER_MSEC		1000000ULL

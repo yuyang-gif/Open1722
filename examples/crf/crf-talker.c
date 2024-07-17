@@ -63,7 +63,7 @@
 #include <math.h>
 
 #include "avtp/Crf.h"
-#include "common.h"
+#include "common/common.h"
 #include "avtp/CommonHeader.h"
 
 #define STREAM_ID		0xAABBCCDDEEFF0002

@@ -1,7 +1,6 @@
 #!/bin/bash 
 set -ev 
 
-./build_all.sh
-cd ./build 
-meson test
-ninja coverage-html
+./build_all.sh 
+make test
+# ninja coverage-html

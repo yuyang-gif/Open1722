@@ -101,7 +101,7 @@
 
 #include "avtp/Crf.h"
 #include "avtp/aaf/PcmStream.h"
-#include "common.h"
+#include "common/common.h"
 #include "avtp/CommonHeader.h"
 
 #define AAF_STREAM_ID		0xAABBCCDDEEFF0001
