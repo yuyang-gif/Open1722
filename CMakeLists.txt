@@ -102,7 +102,7 @@ target_link_libraries(cvf-listener open1722pdu open1722examples)
 
 enable_testing()
 
-find_package(cmocka 1.1.0 REQUIRED)
+# find_package(cmocka 1.1.0 REQUIRED)
 
 list(APPEND TEST_TARGETS test-aaf)
 list(APPEND TEST_TARGETS test-avtp)

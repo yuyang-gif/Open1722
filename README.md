@@ -26,35 +26,26 @@ This repository is organized as follows:
 - The `examples/` folder contains various applications that use our Open1722 library. The applications are targeted to Linux platforms.
 
 Before building Open1722 make sure you have installed the following software :
-* Meson >= 0.56
-* Ninja >= 1.10.1
+* CMake >= 3.20
+* CMocka >= 1.1.0
 
 Alternatively, you can use VS Code to run the provided dev container which takes care of the dependencies.
 
-The first step to build Open1722 is to generate the build system files.
+The first step to build Open1722 is to generate the Makefile and build the project.
 ```
-$ meson build
-```
-
-Then build Open1722 by running the following command. The building artifacts will be created under the build/ in the top-level directory.
-```
-$ meson compile -C build
+$ cd Open1722
+$ cmake .
+$ make
 ```
 
 The build can be cleaned using the following command:
 ```
-$ meson --wipe build
+$ make clean
 ```
 
 To install Open1722 on your system run:
 ```
-$ cd build
-$ sudo meson install
-```
-
-To build all the AVTP targets from the repository, we have a script:
-```
-$ ./build_all.sh
+$ sudo make install
 ```
 
 ## AVTP Formats Support
@@ -77,10 +68,7 @@ The following is the list of the formats currently supported by Open1722:
 
 The `examples/` directory provides sample applications which demonstrate the Open1722 functionalities. Each example directory contains a README file that includes specific details on its functionality, configuration, and dependencies.
 
-To build an example application run `$ meson compile -C build <path to example>`. On a successful build, the executables are available in the `build/<path to example>`.
-
-E.g. to build and execute the IEEE 1722 CAN Talker application:
+To execute the IEEE 1722 CAN Talker application:
 ```
-$ meson compile -C build ./examples/acf-can/acf-can-talker
-$ ./build/examples/acf-can/acf-can-talker
+$ ./bin/acf-can-talker
 ```
