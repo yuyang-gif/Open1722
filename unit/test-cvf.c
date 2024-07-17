@@ -33,8 +33,9 @@
 #include <setjmp.h>
 #include <cmocka.h>
 #include <arpa/inet.h>
+#include <errno.h>
 
-#include "avtp.h"
+#include "avtp/CommonHeader.h"
 #include "avtp/cvf/Cvf.h"
 #include "avtp/cvf/H264.h"
 
