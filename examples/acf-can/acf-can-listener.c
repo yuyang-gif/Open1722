@@ -248,11 +248,19 @@ static int new_packet(int sk_fd, int can_socket) {
                 sprintf(stdout_string+(2*i), "%02x", can_payload[i]);
             }
 
-            fprintf(stdout, "(000000.000000) elmcan %03lx#%s\n", can_frame_id,
-                                                            stdout_string);
+            if (can_frame_id <= 0x7FF) {
+              fprintf(stdout, "(000000.000000) elmcan %03lx#%s\n", can_frame_id,
+                                                                  stdout_string);
+            } else {
+              fprintf(stdout, "(000000.000000) elmcan 0000%03lx#%s\n", can_frame_id,
+                                                                      stdout_string);
+            }
             fflush(stdout);
         } else {
             frame.can_id = (canid_t) can_frame_id;
+            if (frame.can_id > 0x7FF) {
+              frame.can_id |= CAN_EFF_FLAG;
+            }
             frame.can_dlc = payload_length;
             memcpy(frame.data, can_payload, payload_length);
             if (write(can_socket, &frame, sizeof(struct can_frame)) != sizeof(struct can_frame)) {
