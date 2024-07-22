@@ -33,64 +33,46 @@ target_include_directories(open1722pdu PRIVATE "include")
 
 # Common library accross all examples
 add_library(open1722examples STATIC "examples/common/common.c")
-target_include_directories(open1722examples PRIVATE
-    "${PROJECT_SOURCE_DIR}/examples"
-    "${PROJECT_SOURCE_DIR}/include")
+target_include_directories(open1722examples PRIVATE "examples" "include")
 
 # AAF listener app
 add_executable(aaf-listener "examples/aaf/aaf-listener.c")
-target_include_directories(aaf-listener PRIVATE
-    "${PROJECT_SOURCE_DIR}/examples"
-    "${PROJECT_SOURCE_DIR}/include")
+target_include_directories(aaf-listener PRIVATE "examples" "include")
 target_link_libraries(aaf-listener open1722pdu open1722examples)
 
 # AAF talker app
 add_executable(aaf-talker "examples/aaf/aaf-talker.c")
-target_include_directories(aaf-talker PRIVATE
-    "${PROJECT_SOURCE_DIR}/examples"
-    "${PROJECT_SOURCE_DIR}/include")
+target_include_directories(aaf-talker PRIVATE "examples" "include")
 target_link_libraries(aaf-talker open1722pdu open1722examples)
 
 # CAN talker app
 add_executable(acf-can-talker "examples/acf-can/acf-can-talker.c")
-target_include_directories(acf-can-talker PRIVATE
-    "${PROJECT_SOURCE_DIR}/examples"
-    "${PROJECT_SOURCE_DIR}/include")
+target_include_directories(acf-can-talker PRIVATE "examples" "include")
 target_link_libraries(acf-can-talker open1722pdu open1722examples)
 
 # CAN listener app
 add_executable(acf-can-listener "examples/acf-can/acf-can-listener.c")
-target_include_directories(acf-can-listener PRIVATE
-    "${PROJECT_SOURCE_DIR}/examples"
-    "${PROJECT_SOURCE_DIR}/include")
+target_include_directories(acf-can-listener PRIVATE "examples" "include")
 target_link_libraries(acf-can-listener open1722pdu open1722examples)
 
 # CRF talker app
 add_executable(crf-talker "examples/crf/crf-talker.c")
-target_include_directories(crf-talker PRIVATE
-    "${PROJECT_SOURCE_DIR}/examples"
-    "${PROJECT_SOURCE_DIR}/include")
+target_include_directories(crf-talker PRIVATE "examples" "include")
 target_link_libraries(crf-talker open1722pdu open1722examples m)
 
 # CRF listener app
 add_executable(crf-listener "examples/crf/crf-listener.c")
-target_include_directories(crf-listener PRIVATE
-    "${PROJECT_SOURCE_DIR}/examples"
-    "${PROJECT_SOURCE_DIR}/include")
+target_include_directories(crf-listener PRIVATE "examples" "include")
 target_link_libraries(crf-listener open1722pdu open1722examples m)
 
 # CVF talker app
 add_executable(cvf-talker "examples/cvf/cvf-talker.c")
-target_include_directories(cvf-talker PRIVATE
-    "${PROJECT_SOURCE_DIR}/examples"
-    "${PROJECT_SOURCE_DIR}/include")
+target_include_directories(cvf-talker PRIVATE "examples" "include")
 target_link_libraries(cvf-talker open1722pdu open1722examples)
 
 # CVF listener app
 add_executable(cvf-listener "examples/cvf/cvf-listener.c")
-target_include_directories(cvf-listener PRIVATE
-    "${PROJECT_SOURCE_DIR}/examples"
-    "${PROJECT_SOURCE_DIR}/include")
+target_include_directories(cvf-listener PRIVATE "examples" "include")
 target_link_libraries(cvf-listener open1722pdu open1722examples)
 
 #### Tests ####################################################################
@@ -109,7 +91,7 @@ list(APPEND TEST_TARGETS test-rvf)
 
 foreach(TEST_TARGET IN LISTS TEST_TARGETS)
     add_executable(${TEST_TARGET} "unit/${TEST_TARGET}.c")
-    target_include_directories(${TEST_TARGET} PRIVATE "${PROJECT_SOURCE_DIR}/include")
+    target_include_directories(${TEST_TARGET} PRIVATE "include")
     target_link_libraries(${TEST_TARGET} open1722pdu cmocka m)
     add_test(NAME ${TEST_TARGET} COMMAND "${PROJECT_BINARY_DIR}/${TEST_TARGET}")
 endforeach()
