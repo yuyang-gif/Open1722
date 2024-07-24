@@ -227,7 +227,7 @@ static int new_packet(int sk_fd, int can_socket) {
 
     while (msg_proc_bytes < msg_length) {
 
-        acf_pdu = &pdu[proc_bytes];
+        acf_pdu = &pdu[proc_bytes + msg_proc_bytes];
 
         if (!is_valid_acf_packet(acf_pdu)) {
             fprintf(stderr, "Error: Invalid ACF packet.\n");

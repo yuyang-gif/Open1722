@@ -62,6 +62,7 @@ static int priority = -1;
 static uint8_t seq_num = 0;
 static uint8_t use_tscf;
 static uint8_t use_udp;
+static uint8_t multi_can_frames = 1;
 static char can_ifname[IFNAMSIZ] = "STDIN\0";
 
 static char doc[] = "\nacf-can-talker -- a program designed to send CAN messages to \
@@ -69,6 +70,8 @@ static char doc[] = "\nacf-can-talker -- a program designed to send CAN messages
                     \vEXAMPLES\
                     \n\n  acf-can-talker eth0 aa:bb:cc:ee:dd:ff\
                     \n\n    (tunnel transactions from STDIN to a remote CAN bus over Ethernet)\
+                    \n\n  acf-can-talker --count 10 eth0 aa:bb:cc:ee:dd:ff\
+                    \n\n    (as above, but pack 10 CAN frames in one Ethernet frame)\
                     \n\n  acf-can-talker -u 10.0.0.2:17220 vcan1\
                     \n\n    (tunnel transactions from can1 interface to a remote CAN bus over IP)\
                     \n\n  candump can1 | acf-can-talker -u 10.0.0.2:17220\
@@ -79,6 +82,7 @@ static char args_doc[] = "[ifname] dst-mac-address/dst-nw-address:port [can ifna
 static struct argp_option options[] = {            
     {"tscf", 't', 0, 0, "Use TSCF"},
     {"udp",  'u', 0, 0, "Use UDP" },
+    {"count", 'c', "COUNT", 0, "Set count of CAN messages per Ethernet frame"},
     {"can ifname", 0, 0, OPTION_DOC, "CAN interface (set to STDIN by default)"},
     {"ifname", 0, 0, OPTION_DOC, "Network interface (If Ethernet)"},
     {"dst-mac-address", 0, 0, OPTION_DOC, "Stream destination MAC address (If Ethernet)"},
@@ -97,6 +101,9 @@ static error_t parser(int key, char *arg, struct argp_state *state)
         break;
     case 'u':
         use_udp = 1;
+        break;
+    case 'c':
+        multi_can_frames = atoi(arg);
         break;
 
     case ARGP_KEY_NO_ARGS:
@@ -276,6 +283,8 @@ int main(int argc, char *argv[])
     if (fd < 0)
         return 1;
 
+    num_acf_msgs = multi_can_frames;
+
     // Open a CAN socket for reading frames if required
     if (strcmp(can_ifname, "STDIN\0")) {
         can_socket = socket(PF_CAN, SOCK_RAW, CAN_RAW);
@@ -307,12 +316,6 @@ int main(int argc, char *argv[])
     // Sending loop
     for(;;) {
 
-        // Get payload
-        res = get_payload(can_socket, payload, &frame_id, &payload_length);
-        if (!res) {
-            continue;
-        }
-
         // Pack into control formats
         uint8_t *cf_pdu;
         pdu_length = 0;
@@ -331,12 +334,22 @@ int main(int argc, char *argv[])
             goto err;
         pdu_length += res;
 
-        for (int i = 0; i < num_acf_msgs; i++) {
+        int i = 0;
+        while (i < num_acf_msgs) {
+            // Get payload -- will 'spin' here until we get the requested number
+            //                of CAN frames.
+            res = get_payload(can_socket, payload, &frame_id, &payload_length);
+            if (!res) {
+                continue;
+            }
+
             uint8_t* acf_pdu = cf_pdu + pdu_length;
             res = prepare_acf_packet(acf_pdu, payload, payload_length, frame_id);
             if (res < 0)
                 goto err;
             pdu_length += res;
+
+            i++;
         }
         
         res = update_pdu_length(cf_pdu, pdu_length);
