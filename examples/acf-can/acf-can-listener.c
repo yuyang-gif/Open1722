@@ -181,6 +181,7 @@ static int new_packet(int sk_fd, int can_socket) {
     Avtp_UDP_t *udp_pdu;
     char stdout_string[1000] = "\0";
     struct can_frame frame;
+    uint64_t eff;
 
     res = recv(sk_fd, pdu, MAX_PDU_SIZE, 0);
 
@@ -226,7 +227,7 @@ static int new_packet(int sk_fd, int can_socket) {
 
     while (msg_proc_bytes < msg_length) {
 
-        acf_pdu = &pdu[proc_bytes];
+        acf_pdu = &pdu[proc_bytes + msg_proc_bytes];
 
         if (!is_valid_acf_packet(acf_pdu)) {
             fprintf(stderr, "Error: Invalid ACF packet.\n");
@@ -243,16 +244,33 @@ static int new_packet(int sk_fd, int can_socket) {
         can_payload = Avtp_Can_GetPayload((Avtp_Can_t*)acf_pdu, &payload_length, &pdu_length);
         msg_proc_bytes += pdu_length*4;
 
+        res = Avtp_Can_GetField((Avtp_Can_t*)acf_pdu, AVTP_CAN_FIELD_EFF, &eff);
+        if (res < 0) {
+            fprintf(stderr, "Failed to get eff field: %d\n", res);
+            return -1;
+        }
+
+        if (can_frame_id > 0x7FF && !eff) {
+          fprintf(stderr, "Error: CAN ID is > 0x7FF but the EFF bit is not set.\n");
+          return -1;
+        }
+
         if (can_socket == 0) {
             for (i = 0; i < payload_length; i++) {
                 sprintf(stdout_string+(2*i), "%02x", can_payload[i]);
             }
 
-            fprintf(stdout, "(000000.000000) elmcan %03lx#%s\n", can_frame_id,
-                                                            stdout_string);
+            if (eff) {
+              fprintf(stdout, "(000000.000000) elmcan 0000%03lx#%s\n", can_frame_id, stdout_string);
+            } else {
+              fprintf(stdout, "(000000.000000) elmcan %03lx#%s\n", can_frame_id, stdout_string);
+            }
             fflush(stdout);
         } else {
             frame.can_id = (canid_t) can_frame_id;
+            if (eff) {
+              frame.can_id |= CAN_EFF_FLAG;
+            }
             frame.can_dlc = payload_length;
             memcpy(frame.data, can_payload, payload_length);
             if (write(can_socket, &frame, sizeof(struct can_frame)) != sizeof(struct can_frame)) {
