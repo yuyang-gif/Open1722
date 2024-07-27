@@ -54,7 +54,7 @@
  * display, you can do something like:
  *
  * $ cvf-listener <args> | gst-launch-1.0 filesrc location=/dev/stdin \
- *  ! decodebin ! videoconvert ! autovideosink
+ *    ! h264parse ! avdec_h264 ! videoconvert ! autovideosink
  */
 
 #include <assert.h>
