@@ -15,7 +15,7 @@ The easiest way to use this example is by combining it with a GStreamer pipeline
 
 ```
 $ cvf-listener <args> | gst-launch-1.0 filesrc location=/dev/stdin \
-  ! decodebin ! videoconvert ! autovideosink
+  ! h264parse ! avdec_h264 ! videoconvert ! autovideosink
 ```
 
 ## CVF Talker

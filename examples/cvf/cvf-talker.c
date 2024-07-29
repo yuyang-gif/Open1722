@@ -141,6 +141,7 @@ static int init_pdu(Avtp_Cvf_t* cvf)
 {
     Avtp_Cvf_Init(cvf);
     Avtp_Cvf_SetField(cvf, AVTP_CVF_FIELD_FORMAT_SUBTYPE, AVTP_CVF_FORMAT_SUBTYPE_H264);
+    Avtp_Cvf_SetField(cvf, AVTP_CVF_FIELD_FORMAT, AVTP_CVF_FORMAT_RFC);
     Avtp_Cvf_SetField(cvf, AVTP_CVF_FIELD_TV, 1);
     Avtp_Cvf_SetField(cvf, AVTP_CVF_FIELD_STREAM_ID, STREAM_ID);
     Avtp_Cvf_SetField(cvf, AVTP_CVF_FIELD_M, 1);
