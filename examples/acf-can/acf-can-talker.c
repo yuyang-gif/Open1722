@@ -54,14 +54,15 @@
 #define STREAM_ID                   0xAABBCCDDEEFF0001
 #define CAN_PAYLOAD_MAX_SIZE        16*4
 
-static char ifname[IFNAMSIZ];
-static uint8_t macaddr[ETH_ALEN];
+static char ifname[IFNAMSIZ] = "eno1";
+static uint8_t macaddr[ETH_ALEN] = {0x01, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa};
+//static uint8_t macaddr[ETH_ALEN];
 static uint8_t ip_addr[sizeof(struct in_addr)];
 static uint32_t udp_port=17220;
 static int priority = -1;
 static uint8_t seq_num = 0;
-static uint8_t use_tscf;
-static uint8_t use_udp;
+static uint8_t use_tscf = 0;
+static uint8_t use_udp = 0;
 static uint8_t multi_can_frames = 1;
 static char can_ifname[IFNAMSIZ] = "STDIN\0";
 
@@ -198,21 +199,30 @@ static int prepare_acf_packet(uint8_t* acf_pdu,
 
     int processedBytes;
     struct timespec now;
-    Avtp_Can_t* pdu = (Avtp_Can_t*) acf_pdu;
+    //源代码
+    // Avtp_Can_t* pdu = (Avtp_Can_t*) acf_pdu;
 
-    // Clear bits
-    memset(pdu, 0, AVTP_CAN_HEADER_LEN);
+    // // Clear bits
+    //memset(pdu, 0, AVTP_CAN_HEADER_LEN);
 
-    // Prepare ACF PDU for CAN
-    Avtp_Can_Init(pdu);
-    clock_gettime(CLOCK_REALTIME, &now);
-    Avtp_Can_SetField(pdu, AVTP_CAN_FIELD_MESSAGE_TIMESTAMP, (uint64_t)now.tv_nsec + (uint64_t)(now.tv_sec * 1e9));
-    Avtp_Can_SetField(pdu, AVTP_CAN_FIELD_MTV, 1U);
+    // // Prepare ACF PDU for CAN
+    // Avtp_Can_Init(pdu);
+    // clock_gettime(CLOCK_REALTIME, &now);
+    // Avtp_Can_SetField(pdu, AVTP_CAN_FIELD_MESSAGE_TIMESTAMP, (uint64_t)now.tv_nsec + (uint64_t)(now.tv_sec * 1e9));
+    // Avtp_Can_SetField(pdu, AVTP_CAN_FIELD_MTV, 1U);
 
-    // Copy payload to ACF CAN PDU
-    processedBytes = Avtp_Can_SetPayload(pdu, can_frame_id, payload, length, CAN_CLASSIC);
+    // // Copy payload to ACF CAN PDU
+    //processedBytes = Avtp_Can_SetPayload(pdu, can_frame_id, payload, length, CAN_CLASSIC);
 
-    return processedBytes;
+    // return processedBytes;
+
+    // Avtp_Ntscf_t*pdu = (Avtp_Ntscf_t*) acf_pdu;
+    // memset(pdu, 0, AVTP_NTSCF_HEADER_LEN);
+    // Avtp_Ntscf_Init(pdu);
+    
+    //memcpy(acf_pdu->payload, payload, length);
+
+
 }
 
 static int get_payload(int can_socket, uint8_t* payload, uint32_t *frame_id, uint8_t *length) {
@@ -282,24 +292,25 @@ int main(int argc, char *argv[])
     }
     if (fd < 0)
         return 1;
+    
+    num_acf_msgs =1;
+    // num_acf_msgs = multi_can_frames;
 
-    num_acf_msgs = multi_can_frames;
+    // // Open a CAN socket for reading frames if required
+    // if (strcmp(can_ifname, "STDIN\0")) {
+    //     can_socket = socket(PF_CAN, SOCK_RAW, CAN_RAW);
+    //     if (can_socket < 0)
+    //         return 1;
 
-    // Open a CAN socket for reading frames if required
-    if (strcmp(can_ifname, "STDIN\0")) {
-        can_socket = socket(PF_CAN, SOCK_RAW, CAN_RAW);
-        if (can_socket < 0)
-            return 1;
+    //     strcpy(ifr.ifr_name, can_ifname);
+    //     ioctl(can_socket, SIOCGIFINDEX, &ifr);
 
-        strcpy(ifr.ifr_name, can_ifname);
-        ioctl(can_socket, SIOCGIFINDEX, &ifr);
-
-        memset(&can_addr, 0, sizeof(can_addr));
-        can_addr.can_family = AF_CAN;
-        can_addr.can_ifindex = ifr.ifr_ifindex;
-        if (bind(can_socket, (struct sockaddr *)&can_addr, sizeof(can_addr)) < 0) 
-            return 1;
-    }
+    //     memset(&can_addr, 0, sizeof(can_addr));
+    //     can_addr.can_family = AF_CAN;
+    //     can_addr.can_ifindex = ifr.ifr_ifindex;
+    //     if (bind(can_socket, (struct sockaddr *)&can_addr, sizeof(can_addr)) < 0) 
+    //         return 1;
+    // }
 
 
     if (use_udp) {
@@ -333,26 +344,21 @@ int main(int argc, char *argv[])
         if (res < 0)
             goto err;
         pdu_length += res;
-
         int i = 0;
-        while (i < num_acf_msgs) {
-            // Get payload -- will 'spin' here until we get the requested number
-            //                of CAN frames.
-            res = get_payload(can_socket, payload, &frame_id, &payload_length);
-            if (!res) {
-                continue;
-            }
 
-            uint8_t* acf_pdu = cf_pdu + pdu_length;
-            res = prepare_acf_packet(acf_pdu, payload, payload_length, frame_id);
-            if (res < 0)
-                goto err;
-            pdu_length += res;
+        for(int  i = 0; i < 64 ;i ++){
+                payload[i] = 1;
+        } 
+        payload_length = sizeof(payload);
 
-            i++;
-        }
-        
+        uint8_t* acf_pdu = cf_pdu + pdu_length;
+        //res = prepare_acf_packet(acf_pdu, payload, payload_length, frame_id);
+        memcpy(acf_pdu, payload, payload_length);
+    
+        pdu_length += payload_length;
+
         res = update_pdu_length(cf_pdu, pdu_length);
+
         if (res < 0)
             goto err;
 
@@ -367,13 +373,13 @@ int main(int argc, char *argv[])
         } else {
             res = sendto(fd, pdu, pdu_length, 0,
                          (struct sockaddr *) &sk_ll_addr, sizeof(sk_ll_addr));
+            
             if (res < 0) {
                 perror("Failed to send data");
                 goto err;
             }
         }
     }
-
 err:
     close(fd);
     return 1;
